@@ -29,14 +29,16 @@ module.exports = {
 
                 const response = await generateResponse(userInfo, messageContent, message.channel, initialMessage);
 
-                if (initialMessage) {
-                    // The response has already been edited into the initial message
-                } else {
+                if (!initialMessage) {
                     await message.reply(response);
                 }
             } catch (error) {
                 logger.error('Error in AI response generation:', error);
-                message.reply('Sorry, I encountered an error while processing your message.');
+                if (error === 'OPENAI ERROR') {
+                    message.reply('Sorry, I encountered an error while processing your message. [OPENAI ERROR]');
+                } else {
+                    message.reply('Sorry, I encountered an error while processing your message. [UNCAUGHT MESSAGE ERROR]');
+                }
             }
         }
     },

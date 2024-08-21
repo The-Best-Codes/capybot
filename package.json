@@ -1,12 +1,24 @@
 {
   "name": "capybot",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Your friendly Capybara Bot is capyble or fulfilling all your Discord needs",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "dev": "npx nodemon src/index.js",
+    "clean": "rm -rf capybot.log",
+    "update": "npx npm-check -u",
+    "deploy": "git add . && git commit -m 'update' && git push"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/The-Best-Codes/capybot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/The-Best-Codes/capybot/issues"
+  },
+  "homepage": "https://github.com/The-Best-Codes/capybot#readme",
   "keywords": [
     "bot",
     "discord",
@@ -21,5 +33,8 @@
     "openai": "^4.56.0",
     "perf_hooks": "^0.0.1",
     "winston": "^3.14.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
   }
 }

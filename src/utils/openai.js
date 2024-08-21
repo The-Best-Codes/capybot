@@ -158,11 +158,9 @@ async function generateResponse(userInfo, message, channel, initialMessage = nul
 
         return content;
     } catch (error) {
-        console.error('Error in generateResponse:', error);
-        if (error.response) {
-            console.error('OpenAI API Error:', error.response.data);
-        }
-        return 'Sorry, I encountered an error while processing your message.';
+        console.error('Error in generateResponse.');
+        throw 'OPENAI ERROR';
+        // return 'Sorry, I encountered an error while processing your message. [OPENAI ERROR]';
     }
 }
 

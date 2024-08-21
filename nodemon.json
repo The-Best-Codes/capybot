@@ -1,0 +1,6 @@
+{
+  "watch": ["./src", "./config", "./package.json", "./nodemon.json", "./.env"],
+  "ext": "js,json",
+  "ignore": ["node_modules"],
+  "exec": "node --inspect"
+}
