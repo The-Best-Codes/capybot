@@ -1,6 +1,6 @@
 {
   "name": "capybot",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Your friendly Capybara Bot is capyble or fulfilling all your Discord needs",
   "main": "index.js",
   "scripts": {

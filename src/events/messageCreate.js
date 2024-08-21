@@ -24,7 +24,10 @@ module.exports = {
                 messageContent = messageContent.replace(`<@${botId}>`, '');
                 messageContent = messageContent.trim();
 
-                const response = await generateResponse(userInfo, message.content, message.channel, initialMessage);
+                // Replace user mentions with @(username)
+                messageContent = await replaceMentionsWithUsernames(messageContent, client);
+
+                const response = await generateResponse(userInfo, messageContent, message.channel, initialMessage);
 
                 if (initialMessage) {
                     // The response has already been edited into the initial message
@@ -38,3 +41,22 @@ module.exports = {
         }
     },
 };
+
+async function replaceMentionsWithUsernames(content, client) {
+    const mentionRegex = /<@!?(\d+)>/g;
+    let match;
+    let newContent = content;
+
+    while ((match = mentionRegex.exec(content)) !== null) {
+        const userId = match[1];
+        try {
+            const user = await client.users.fetch(userId);
+            newContent = newContent.replace(match[0], `@(${user.username})`);
+        } catch (error) {
+            logger.error(`Error fetching user ${userId}:`, error);
+            // If we can't fetch the user, we'll leave the mention as is
+        }
+    }
+
+    return newContent;
+}
