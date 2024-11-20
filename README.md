@@ -1,5 +1,7 @@
 # CapyBot
 
+<img src="https://github.com/user-attachments/assets/4619fb06-ae3a-42c7-a52c-4f86dfe8b798" alt="cover" for="cover" width="500" />
+
 CapyBot is a Discord bot with OpenAI integration, featuring various commands and AI-powered conversations.
 
 ## Features
