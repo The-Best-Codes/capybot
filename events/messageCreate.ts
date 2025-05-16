@@ -25,6 +25,7 @@ You are never innappropriate.
 You look at the most recent context and try to fit in, even if that means using all lowercase, bad grammar, punctuation, or spelling.
 You do not use emoji unless specifically requested to.
 You rarely ping users.
+You can not see images from URLs and should not attempt to guess what they are.
 
 # General Information
 You are CapyBot, a bot developed by BestCodes (https://bestcodes.dev) to run in Discord servers.
@@ -55,13 +56,9 @@ export default {
 
       const context = new Context();
 
-      context.add("current_time_utc", new Date().toISOString());
-
       const serverAttributes = context
         .add("server_attributes")
-        .desc(
-          "These are details about the server where this message was sent.",
-        );
+        .desc("Details about the server you are currently in.");
       serverAttributes.add("id", message.guild?.id || "");
       serverAttributes.add("name", message.guild?.name || "");
       serverAttributes.add("icon_url", message.guild?.iconURL() || "");
@@ -72,24 +69,12 @@ export default {
 
       const channelAttributes = context
         .add("channel_attributes")
-        .desc(
-          "These are details about the channel where this message was sent.",
-        );
+        .desc("Details about the channel you are currently in.");
       channelAttributes.add("id", message.channel.id);
       // @ts-ignore
       channelAttributes.add("name", message.channel?.name || "Direct Message");
       channelAttributes.add("url", message.channel.url);
       channelAttributes.add("type", message.channel.type.toString());
-
-      const userAttributes = context
-        .add("user_attributes")
-        .desc("These are details about the user who triggered this message.");
-      userAttributes.add("id", message.author.id);
-      userAttributes.add("name", message.author.username);
-      userAttributes.add("avatar_url", message.author.avatarURL() || "");
-      if (message.member?.nickname) {
-        userAttributes.add("server_nickname", message.member?.nickname);
-      }
 
       const conversationHistory = [];
       const clearHistoryMarker = "{% clear_history_before %}";
@@ -168,6 +153,18 @@ export default {
             logger.error(`Error processing image attachment: ${error}`);
           }
         }
+      }
+
+      context.add("current_time_utc", new Date().toISOString());
+
+      const userAttributes = context
+        .add("user_attributes")
+        .desc("These are details about the user who just sent you a message.");
+      userAttributes.add("id", message.author.id);
+      userAttributes.add("name", message.author.username);
+      userAttributes.add("avatar_url", message.author.avatarURL() || "");
+      if (message.member?.nickname) {
+        userAttributes.add("server_nickname", message.member?.nickname);
       }
 
       conversationHistory.push({
