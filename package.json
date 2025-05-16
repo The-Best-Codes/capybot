@@ -1,40 +1,22 @@
 {
-  "name": "capybot",
-  "version": "1.0.4",
-  "description": "Your friendly Capybara Bot is capyble or fulfilling all your Discord needs",
-  "main": "index.js",
+  "name": "discraft-bot",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Bot created with discraft",
+  "module": "index.ts",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js",
-    "dev": "npx nodemon src/index.js",
-    "clean": "rm -rf capybot.log",
-    "update": "npx npm-check -u",
-    "deploy": "git add . && git commit -m 'update' && git push"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/The-Best-Codes/capybot.git"
-  },
-  "bugs": {
-    "url": "https://github.com/The-Best-Codes/capybot/issues"
-  },
-  "homepage": "https://github.com/The-Best-Codes/capybot#readme",
-  "keywords": [
-    "bot",
-    "discord",
-    "capybara"
-  ],
-  "author": "The-Best-Codes",
-  "license": "MIT",
-  "dependencies": {
-    "axios": "^1.7.7",
-    "discord.js": "^14.16.2",
-    "dotenv": "^16.4.5",
-    "openai": "^4.62.0",
-    "perf_hooks": "^0.0.1",
-    "winston": "^3.14.2"
+    "start": "discraft start",
+    "build": "discraft build",
+    "dev": "discraft dev"
   },
   "devDependencies": {
-    "nodemon": "^3.1.5"
+    "discraft": "^1.7.5"
+  },
+  "dependencies": {
+    "@google/genai": "^0.14.0",
+    "consola": "^3.4.2",
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.5.0"
   }
 }

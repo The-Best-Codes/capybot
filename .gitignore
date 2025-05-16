@@ -1,28 +1,10 @@
-# node
+dist
 node_modules
-.npm
-*.log
-*.pid
-*.pid.lock
-*.lock
-*.pidb
-*.pidb.lock
-
-# vscode
-.vscode
-.vscode-insiders
-
-# npm
+bun.lockb
+bun.lock
 package-lock.json
 yarn.lock
-
-# git
-.git
-
-# docker
-.Dockerfile
-.Dockerignore
-
-# env
+pnpm-lock.yaml
 .env
-.env.local
+.discraft
+data/feedback
