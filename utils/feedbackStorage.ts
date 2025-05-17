@@ -74,7 +74,7 @@ export const storeFeedback = async (
         surroundingMessages: formattedMessages, // Update with current context
       };
 
-      logger.info(
+      logger.verbose(
         `Updating existing feedback for message ${messageId} from user ${userId}`,
       );
     } else {
@@ -88,13 +88,13 @@ export const storeFeedback = async (
         surroundingMessages: formattedMessages,
       };
 
-      logger.info(
+      logger.verbose(
         `Creating new feedback entry for message ${messageId} from user ${userId}`,
       );
     }
 
     fs.writeFileSync(filePath, JSON.stringify(feedbackData, null, 2));
-    logger.info(
+    logger.verbose(
       `Stored feedback for message ${messageId} from user ${userId} in ${filename}`,
     );
   } catch (error) {

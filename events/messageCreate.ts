@@ -1,4 +1,4 @@
-import { DynamicRetrievalConfigMode, GoogleGenAI } from "@google/genai";
+import type { Content, Part } from "@google/genai";
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -7,34 +7,17 @@ import {
   Events,
   Message,
   type OmitPartialGroupDMChannel,
-  TextChannel,
 } from "discord.js";
+import {
+  buildChannelContext,
+  buildServerContext,
+  buildUserContext,
+} from "../utils/ai/clientContextBuilders";
+import { buildConversationHistory } from "../utils/ai/conversationHistory";
+import { generateAIResponse } from "../utils/ai/generateAIResponse";
+import { buildImageParts } from "../utils/ai/imageParts";
 import { Context } from "../utils/contextBuilder";
-import { downloadImageVirtual } from "../utils/downloadImageVirtual";
 import { logger } from "../utils/logger";
-
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-const systemInstruction = {
-  role: "system",
-  parts: [
-    {
-      text: `# General Rules
-You never include \`<context>\` details in your responses. You use \`<context>\` details to personalize your responses.
-You are never innappropriate.
-You look at the most recent context and try to fit in, even if that means using all lowercase, bad grammar, punctuation, or spelling.
-You do not use emoji unless specifically requested to.
-You rarely ping users.
-You can not see images from URLs and should not attempt to guess what they are.
-
-# General Information
-You are CapyBot, a bot developed by BestCodes (https://bestcodes.dev) to run in Discord servers.
-Your ID is ${process.env.DISCORD_APP_ID || "unknown"}.
-Your training cutoff date is August 2024.
-`,
-    },
-  ],
-};
 
 export default {
   event: Events.MessageCreate,
@@ -42,7 +25,7 @@ export default {
     client: Client,
     message: OmitPartialGroupDMChannel<Message<boolean>>,
   ) => {
-    if (message.author.bot) return; // Ignore bot messages
+    if (message.author.bot) return;
 
     const shouldRandomlyRespond = Math.random() < 0.1;
     const shouldRespond =
@@ -55,117 +38,25 @@ export default {
       await message.channel.sendTyping();
 
       const context = new Context();
+      buildServerContext(context, message);
+      buildChannelContext(context, message);
 
-      const serverAttributes = context
-        .add("server_attributes")
-        .desc("Details about the server you are currently in.");
-      serverAttributes.add("id", message.guild?.id || "");
-      serverAttributes.add("name", message.guild?.name || "");
-      serverAttributes.add("icon_url", message.guild?.iconURL() || "");
-      serverAttributes.add(
-        "member_count",
-        message.guild?.memberCount?.toString() || "",
+      const conversationHistory: Content[] = await buildConversationHistory(
+        client,
+        message,
       );
 
-      const channelAttributes = context
-        .add("channel_attributes")
-        .desc("Details about the channel you are currently in.");
-      channelAttributes.add("id", message.channel.id);
-      // @ts-ignore
-      channelAttributes.add("name", message.channel?.name || "Direct Message");
-      channelAttributes.add("url", message.channel.url);
-      channelAttributes.add("type", message.channel.type.toString());
-
-      const conversationHistory = [];
-      const clearHistoryMarker = "{% clear_history_before %}";
-      let historyStartIndex = 0;
-
-      if (message.channel instanceof TextChannel) {
-        const messages = await message.channel.messages.fetch({ limit: 50 });
-        const history = Array.from(messages.values()).reverse();
-
-        for (let i = history.length - 2; i >= 0; i--) {
-          const msg = history[i];
-          if (msg.content.includes(clearHistoryMarker)) {
-            historyStartIndex = i;
-            break;
-          }
-        }
-
-        for (let i = historyStartIndex; i < history.length - 1; i++) {
-          const msg = history[i];
-          if (msg.author.id === client.user?.id) {
-            conversationHistory.push({
-              role: "model",
-              parts: [{ text: msg?.content || "Error: No message content" }],
-            });
-          } else {
-            const historyContext = new Context();
-
-            const userAttrs = historyContext
-              .add("user_attributes")
-              .desc("Details about the user who sent this message.");
-            userAttrs.add("id", msg.author.id);
-            userAttrs.add("name", msg.author.username);
-            userAttrs.add("avatar_url", msg.author.avatarURL() || "");
-            if (msg.member?.nickname) {
-              userAttrs.add("server_nickname", msg.member?.nickname);
-            }
-            if (msg.author.bot) {
-              userAttrs.add("is_bot", "true");
-            }
-
-            conversationHistory.push({
-              role: "user",
-              parts: [
-                {
-                  text: `${historyContext.toString()}\n\n${msg?.content || "Error: No message content"}`,
-                },
-              ],
-            });
-          }
-        }
-      }
-
-      const imageAttachments = message.attachments.filter((attachment) =>
-        attachment.contentType?.startsWith("image/"),
-      );
-
-      const currentMessageParts = [];
-
-      currentMessageParts.push({
-        text: `${context.toString()}\n\n${message?.content || "Error: No message content"}`,
-      });
-
-      if (imageAttachments.size > 0) {
-        for (const [, attachment] of imageAttachments) {
-          try {
-            const imageBuffer = await downloadImageVirtual(attachment.url);
-            const base64Image = imageBuffer.toString("base64");
-
-            currentMessageParts.push({
-              inlineData: {
-                data: base64Image,
-                mimeType: attachment.contentType || "image/jpeg",
-              },
-            });
-          } catch (error) {
-            logger.error(`Error processing image attachment: ${error}`);
-          }
-        }
-      }
+      const imageParts: Part[] = await buildImageParts(message);
 
       context.add("current_time_utc", new Date().toISOString());
+      buildUserContext(context, message);
 
-      const userAttributes = context
-        .add("user_attributes")
-        .desc("These are details about the user who just sent you a message.");
-      userAttributes.add("id", message.author.id);
-      userAttributes.add("name", message.author.username);
-      userAttributes.add("avatar_url", message.author.avatarURL() || "");
-      if (message.member?.nickname) {
-        userAttributes.add("server_nickname", message.member?.nickname);
-      }
+      const currentMessageParts = [
+        {
+          text: `${context.toString()}\n\n${message?.content || "Error: No message content"}`,
+        },
+        ...imageParts,
+      ];
 
       conversationHistory.push({
         role: "user",
@@ -177,25 +68,9 @@ export default {
 There are ${conversationHistory.length} messages in the conversation history.`,
       );
 
-      const modelName = process.env.GEMINI_AI_MODEL || "gemini-2.0-flash-001";
-      const geminiModels = genAI.models;
-
-      const response = await geminiModels.generateContent({
-        model: modelName,
-        contents: conversationHistory,
-        config: {
-          systemInstruction: systemInstruction,
-          tools: [
-            {
-              googleSearch: {
-                dynamicRetrievalConfig: {
-                  dynamicThreshold: 0.5,
-                  mode: DynamicRetrievalConfigMode.MODE_DYNAMIC,
-                },
-              },
-            },
-          ],
-        },
+      const response = await generateAIResponse({
+        conversationHistory,
+        discordAppId: process.env.DISCORD_APP_ID || "unknown",
       });
 
       const responseText = response.text;
