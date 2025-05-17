@@ -131,7 +131,7 @@ There are ${conversationHistory.length} messages in the conversation history.`,
     } catch (error) {
       logger.error(`Error generating AI response: ${error}`);
       await message.reply(
-        "Oh no! Something went wrong when I tried to respond to you. :(",
+        "Oh no! Something went wrong when I tried to respond to you.",
       );
     }
   },
