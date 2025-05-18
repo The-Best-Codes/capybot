@@ -23,22 +23,53 @@ export async function buildConversationHistory(
 
     for (let i = historyStartIndex; i < history.length - 1; i++) {
       const msg = history[i];
+      const historyContext = new Context();
+
+      if (msg.reference) {
+        const replyAttributes = historyContext
+          .add("replying_to")
+          .desc("Information about the message this message is replying to");
+
+        try {
+          const referencedMessage = await msg.fetchReference();
+          replyAttributes.add("message_id", referencedMessage.id);
+          replyAttributes.add("content", referencedMessage.content);
+
+          const userAttrs = replyAttributes
+            .add("user_attributes")
+            .desc(
+              "Details about the user who wrote the message this message is replying to",
+            );
+          userAttrs.add("id", referencedMessage.author.id);
+          userAttrs.add("username", referencedMessage.author.username);
+          if (referencedMessage.member?.nickname) {
+            userAttrs
+              .add("server_nickname", referencedMessage.member?.nickname)
+              .desc("The user's prefered name in this server");
+          }
+          if (referencedMessage.author.bot) {
+            userAttrs.add("is_bot", "true");
+          }
+        } catch (error) {
+          replyAttributes.add("error", "Could not fetch referenced message");
+        }
+      }
+
       if (msg.author.id === client.user?.id) {
         conversationHistory.push({
           role: "model",
           parts: [{ text: msg?.content || "Error: No message content" }],
         });
       } else {
-        const historyContext = new Context();
-
         const userAttrs = historyContext
           .add("user_attributes")
-          .desc("Details about the user who sent this message.");
+          .desc("Details about the user who sent this message");
         userAttrs.add("id", msg.author.id);
-        userAttrs.add("name", msg.author.username);
-        userAttrs.add("avatar_url", msg.author.avatarURL() || "");
+        userAttrs.add("username", msg.author.username);
         if (msg.member?.nickname) {
-          userAttrs.add("server_nickname", msg.member?.nickname);
+          userAttrs
+            .add("server_nickname", msg.member?.nickname)
+            .desc("The user's prefered name in this server");
         }
         if (msg.author.bot) {
           userAttrs.add("is_bot", "true");

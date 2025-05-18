@@ -10,6 +10,7 @@ import {
 } from "discord.js";
 import {
   buildChannelContext,
+  buildReplyContext,
   buildServerContext,
   buildUserContext,
 } from "../utils/ai/clientContextBuilders";
@@ -40,6 +41,10 @@ export default {
       const context = new Context();
       buildServerContext(context, message);
       buildChannelContext(context, message);
+      await buildReplyContext(context, message);
+
+      // TEMPORARY
+      console.log(context);
 
       const conversationHistory: Content[] = await buildConversationHistory(
         client,
