@@ -28,10 +28,7 @@ export default {
   ) => {
     if (message.author.bot) return;
 
-    const shouldRandomlyRespond = Math.random() < 0.1;
-    const shouldRespond =
-      shouldRandomlyRespond ||
-      message.mentions.users.has(client.user?.id || "");
+    const shouldRespond = message.mentions.users.has(client.user?.id || "");
 
     if (!shouldRespond) return;
 
@@ -66,7 +63,7 @@ export default {
       });
 
       logger.log(
-        `Responding to message ${message.id}. This is a response triggered ${shouldRandomlyRespond && !message.mentions.users.has(client.user?.id || "") ? "randomly" : "due to a ping"}.
+        `Responding to message ${message.id}. This is a response triggered by a ping.
 There are ${conversationHistory.length} messages in the conversation history.`,
       );
 
@@ -86,22 +83,6 @@ There are ${conversationHistory.length} messages in the conversation history.`,
         }
 
         const row = new ActionRowBuilder<ButtonBuilder>();
-
-        if (
-          shouldRandomlyRespond &&
-          !message.mentions.users.has(client.user?.id || "")
-        ) {
-          row.addComponents(
-            new ButtonBuilder()
-              .setCustomId(`thumbsup_${message.id}`)
-              .setStyle(ButtonStyle.Success)
-              .setEmoji("👍"),
-            new ButtonBuilder()
-              .setCustomId(`thumbsdown_${message.id}`)
-              .setStyle(ButtonStyle.Danger)
-              .setEmoji("👎"),
-          );
-        }
 
         if (
           response.candidates &&
