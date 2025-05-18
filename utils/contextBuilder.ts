@@ -25,14 +25,18 @@ export class ContextElement {
   toString(indent = 0): string {
     const padding = "  ".repeat(indent);
 
-    if (this.value !== null) {
-      return `${padding}<${this.name}>${this.value}</${this.name}>`;
+    // TODO: Escape quotes and special characters in the description
+    if (this.value !== null && this.children.length === 0) {
+      if (this.description) {
+        return `${padding}<${this.name} desc="${this.description}">${this.value}</${this.name}>`;
+      } else {
+        return `${padding}<${this.name}>${this.value}</${this.name}>`;
+      }
     }
 
-    let result = `${padding}<${this.name}>`;
-    if (this.description) {
-      result += `\n${padding}  <desc>${this.description}</desc>`;
-    }
+    let result = this.description
+      ? `${padding}<${this.name} desc="${this.description}">`
+      : `${padding}<${this.name}>`;
 
     for (const child of this.children) {
       result += "\n" + child.toString(indent + 1);
