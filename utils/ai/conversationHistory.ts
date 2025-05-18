@@ -26,9 +26,12 @@ export async function buildConversationHistory(
       const historyContext = new Context();
 
       if (msg.reference) {
+        historyContext
+          .add("is_reply", "true")
+          .desc("This message is a reply to another message");
         const replyAttributes = historyContext
           .add("replying_to")
-          .desc("Information about the message this message is replying to");
+          .desc("Information about the message being replied to");
 
         try {
           const referencedMessage = await msg.fetchReference();
@@ -38,7 +41,7 @@ export async function buildConversationHistory(
           const userAttrs = replyAttributes
             .add("user_attributes")
             .desc(
-              "Details about the user who wrote the message this message is replying to",
+              "Details about the user who wrote the message being replied to",
             );
           userAttrs.add("id", referencedMessage.author.id);
           userAttrs.add("username", referencedMessage.author.username);

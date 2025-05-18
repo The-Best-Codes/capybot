@@ -30,7 +30,7 @@ export function buildUserContext(context: Context, message: Message) {
       "These are details about the user who just sent you a message, triggering a response",
     );
   userAttributes.add("id", message.author.id);
-  userAttributes.add("name", message.author.username);
+  userAttributes.add("username", message.author.username);
   if (message.member?.nickname) {
     userAttributes
       .add("server_nickname", message.member?.nickname)
@@ -41,9 +41,12 @@ export function buildUserContext(context: Context, message: Message) {
 export async function buildReplyContext(context: Context, message: Message) {
   if (!message.reference) return;
 
+  context
+    .add("is_reply", "true")
+    .desc("This message is a reply to another message");
   const replyAttributes = context
     .add("replying_to")
-    .desc("Information about the message this message is replying to");
+    .desc("Information about the message being replied to");
 
   try {
     const referencedMessage = await message.fetchReference();
@@ -52,9 +55,7 @@ export async function buildReplyContext(context: Context, message: Message) {
 
     const userAttrs = replyAttributes
       .add("user_attributes")
-      .desc(
-        "Details about the user who wrote the message this message is replying to",
-      );
+      .desc("Details about the user who wrote the message being replied to");
     userAttrs.add("id", referencedMessage.author.id);
     userAttrs.add("username", referencedMessage.author.username);
     if (referencedMessage.member?.nickname) {
