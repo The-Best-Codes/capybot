@@ -43,9 +43,6 @@ export default {
       buildChannelContext(context, message);
       await buildReplyContext(context, message);
 
-      // TEMPORARY
-      console.log(context);
-
       const conversationHistory: Content[] = await buildConversationHistory(
         client,
         message,

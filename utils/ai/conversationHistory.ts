@@ -45,6 +45,9 @@ export async function buildConversationHistory(
             );
           userAttrs.add("id", referencedMessage.author.id);
           userAttrs.add("username", referencedMessage.author.username);
+          userAttrs
+            .add("display_name", referencedMessage.author.displayName)
+            .desc("The user's prefered name on Discord");
           if (referencedMessage.member?.nickname) {
             userAttrs
               .add("server_nickname", referencedMessage.member?.nickname)
@@ -69,6 +72,9 @@ export async function buildConversationHistory(
           .desc("Details about the user who sent this message");
         userAttrs.add("id", msg.author.id);
         userAttrs.add("username", msg.author.username);
+        userAttrs
+          .add("display_name", msg.author.displayName)
+          .desc("The user's prefered name on Discord");
         if (msg.member?.nickname) {
           userAttrs
             .add("server_nickname", msg.member?.nickname)

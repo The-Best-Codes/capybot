@@ -31,6 +31,9 @@ export function buildUserContext(context: Context, message: Message) {
     );
   userAttributes.add("id", message.author.id);
   userAttributes.add("username", message.author.username);
+  userAttributes
+    .add("display_name", message.author.displayName)
+    .desc("The user's prefered name on Discord");
   if (message.member?.nickname) {
     userAttributes
       .add("server_nickname", message.member?.nickname)
@@ -58,10 +61,13 @@ export async function buildReplyContext(context: Context, message: Message) {
       .desc("Details about the user who wrote the message being replied to");
     userAttrs.add("id", referencedMessage.author.id);
     userAttrs.add("username", referencedMessage.author.username);
+    userAttrs
+      .add("display_name", referencedMessage.author.displayName)
+      .desc("The user's prefered name on Discord");
     if (referencedMessage.member?.nickname) {
       userAttrs
         .add("server_nickname", referencedMessage.member?.nickname)
-        .desc("User's prefered name in this server");
+        .desc("The user's prefered name in this server");
     }
     if (referencedMessage.author.bot) {
       userAttrs.add("is_bot", "true");
