@@ -29,7 +29,9 @@ export default {
   ) => {
     if (message.author.bot) return;
 
-    const shouldRespond = message.mentions.users.has(client.user?.id || "");
+    const mentionsBot = message.mentions.users.has(client.user?.id || "");
+    const mentionsEveryone = message.mentions.everyone;
+    const shouldRespond = mentionsBot || mentionsEveryone;
 
     if (!shouldRespond) return;
 
