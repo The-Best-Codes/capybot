@@ -1,8 +1,5 @@
 import type { Content, Part } from "@google/genai";
 import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   ChannelType,
   Client,
   Events,
@@ -81,7 +78,7 @@ export default {
         discordAppId: process.env.DISCORD_APP_ID || "unknown",
       });
 
-      const responseText = response.text;
+      const responseText = response;
 
       if (responseText) {
         let trimmedResponse;
@@ -91,31 +88,8 @@ export default {
           trimmedResponse = responseText;
         }
 
-        const row = new ActionRowBuilder<ButtonBuilder>();
-
-        if (
-          response.candidates &&
-          response.candidates[0]?.groundingMetadata?.groundingSupports &&
-          response.candidates[0]?.groundingMetadata?.groundingSupports?.length >
-            0
-        ) {
-          const numSites =
-            response.candidates[0].groundingMetadata.groundingSupports.length;
-          row.addComponents(
-            new ButtonBuilder()
-              .setCustomId(`web_searches_${message.id}`)
-              .setStyle(ButtonStyle.Secondary)
-              .setLabel(
-                `Searched ${numSites || "a few"} website${numSites === 1 ? "" : "s"}.`,
-              )
-              .setDisabled(true)
-              .setEmoji("🔍"),
-          );
-        }
-
         await message.reply({
           content: `${trimmedResponse}`,
-          components: row.components.length > 0 ? [row] : [],
         });
       } else {
         await message.reply("Oops! The AI didn't respond.");
