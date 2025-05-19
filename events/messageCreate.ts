@@ -47,8 +47,8 @@ export default {
         buildChannelContext(context, message);
       } else {
         buildDMContext(context, message);
-        logger.box(
-          `Responding to DM ${message.id}. Content ${message.content}.`,
+        logger.log(
+          `Responding to DM ${message.id}. Content: ${message.content}.`,
         );
       }
 
