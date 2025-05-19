@@ -33,6 +33,8 @@ export async function buildConversationHistory(
       buildMentionsContext(historyContext, msg);
       await buildReplyContext(historyContext, msg);
 
+      historyContext.add("message-timestamp", msg.createdAt.toISOString());
+
       if (msg.author.id === client.user?.id) {
         conversationHistory.push({
           role: "model",

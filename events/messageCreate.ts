@@ -51,8 +51,7 @@ export default {
 
       const imageParts: Part[] = await buildImageParts(message);
 
-      context.add("current_time_utc", new Date().toISOString());
-      buildUserContext(context, message);
+      context.add("message-timestamp", message.createdAt.toISOString());
 
       const currentMessageParts = [
         {
