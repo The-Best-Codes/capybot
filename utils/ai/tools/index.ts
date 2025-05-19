@@ -1,7 +1,7 @@
-import { scheduleMeeting } from "./scheduleMeeting";
+import { setStatus } from "./setStatus";
 
 export const tools = {
-  [scheduleMeeting.name]: scheduleMeeting,
+  [setStatus.name]: setStatus,
 };
 
 export type ToolName = keyof typeof tools;
