@@ -48,7 +48,7 @@ export default {
       } else {
         buildDMContext(context, message);
         logger.log(
-          `Responding to DM ${message.id}. Content: ${message.content}.`,
+          `Responding to DM ${message.id} from ${message.author.username}. Content: ${message.content}.`,
         );
       }
 
