@@ -1,8 +1,7 @@
 import type { Content } from "@google/genai";
-import { DynamicRetrievalConfigMode, GoogleGenAI } from "@google/genai";
+import { DynamicRetrievalConfigMode } from "@google/genai";
+import { genAI } from "../../clients/googleAi";
 import { systemInstruction } from "./systemInstruction";
-
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function generateAIResponse({
   conversationHistory,
