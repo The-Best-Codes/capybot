@@ -1,5 +1,6 @@
 import { Client, Message, TextChannel } from "discord.js";
 import { Context } from "../contextBuilder";
+import { buildMentionContext } from "./mentionContextBuilder";
 
 export async function buildConversationHistory(
   client: Client,
@@ -24,6 +25,8 @@ export async function buildConversationHistory(
     for (let i = historyStartIndex; i < history.length - 1; i++) {
       const msg = history[i];
       const historyContext = new Context();
+
+      buildMentionContext(historyContext, msg);
 
       if (msg.reference) {
         historyContext
