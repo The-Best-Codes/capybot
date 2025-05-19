@@ -87,6 +87,7 @@ export async function buildReplyContext(context: Context, message: Message) {
 }
 
 export function buildMentionsContext(context: Context, message: Message) {
+  // TODO: Don't add mentions if there are none
   const mentionsContext = context
     .add("mentions")
     .desc("Information about mentions found in the message content");
