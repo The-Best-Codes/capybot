@@ -7,4 +7,4 @@ yarn.lock
 pnpm-lock.yaml
 .env
 .discraft
-data/feedback
+data

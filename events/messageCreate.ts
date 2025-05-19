@@ -8,16 +8,16 @@ import {
   Message,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
+import { buildConversationHistory } from "../utils/ai/context/history";
 import {
   buildChannelContext,
+  buildMentionsContext,
   buildReplyContext,
   buildServerContext,
   buildUserContext,
-} from "../utils/ai/clientContextBuilders";
-import { buildConversationHistory } from "../utils/ai/conversationHistory";
+} from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { buildImageParts } from "../utils/ai/imageParts";
-import { buildMentionContext } from "../utils/ai/mentionContextBuilder";
 import { Context } from "../utils/contextBuilder";
 import { logger } from "../utils/logger";
 
@@ -42,7 +42,7 @@ export default {
       buildServerContext(context, message);
       buildChannelContext(context, message);
       await buildReplyContext(context, message);
-      buildMentionContext(context, message);
+      buildMentionsContext(context, message);
 
       const conversationHistory: Content[] = await buildConversationHistory(
         client,
@@ -66,10 +66,7 @@ export default {
         parts: currentMessageParts,
       });
 
-      logger.log(
-        `Responding to message ${message.id}. This is a response triggered by a ping.
-There are ${conversationHistory.length} messages in the conversation history.`,
-      );
+      logger.log(`Responding to message ${message.id}.`);
 
       const response = await generateAIResponse({
         conversationHistory,

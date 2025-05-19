@@ -15,6 +15,8 @@ export async function generateAIResponse({
 }) {
   const geminiModels = genAI.models;
 
+  console.log(JSON.stringify(conversationHistory));
+
   const response = await geminiModels.generateContent({
     model: modelName,
     contents: conversationHistory,
