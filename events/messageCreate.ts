@@ -42,7 +42,7 @@ export default {
       const context = new Context();
 
       if (message.guild) {
-        logger.box(`Responding to message ${message.id}.`);
+        logger.log(`Responding to message ${message.id}.`);
         buildServerContext(context, message);
         buildChannelContext(context, message);
       } else {
