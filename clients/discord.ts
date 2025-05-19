@@ -1,11 +1,20 @@
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, GatewayIntentBits, Partials } from "discord.js";
 
 const client = new Client({
-  /* Sensible defaults, you can add or remove intents as needed. */
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.DirectMessages,
+  ],
+  partials: [
+    Partials.Channel,
+    Partials.Message,
+    Partials.User,
+    Partials.GuildMember,
+    Partials.Reaction,
+    Partials.GuildScheduledEvent,
+    Partials.ThreadMember,
   ],
 });
 

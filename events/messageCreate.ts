@@ -3,6 +3,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
   Client,
   Events,
   Message,
@@ -11,10 +12,10 @@ import {
 import { buildConversationHistory } from "../utils/ai/context/history";
 import {
   buildChannelContext,
+  buildDMContext,
   buildMentionsContext,
   buildReplyContext,
   buildServerContext,
-  buildUserContext,
 } from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { buildImageParts } from "../utils/ai/imageParts";
@@ -33,14 +34,24 @@ export default {
     const mentionsEveryone = message.mentions.everyone;
     const shouldRespond = mentionsBot || mentionsEveryone;
 
-    if (!shouldRespond) return;
+    if (!shouldRespond && message.channel.type !== ChannelType.DM) return; // Only respond to DMs if not mentioning bot/everyone
 
     try {
       await message.channel.sendTyping();
 
       const context = new Context();
-      buildServerContext(context, message);
-      buildChannelContext(context, message);
+
+      if (message.guild) {
+        logger.box(`Responding to message ${message.id}.`);
+        buildServerContext(context, message);
+        buildChannelContext(context, message);
+      } else {
+        buildDMContext(context, message);
+        logger.box(
+          `Responding to DM ${message.id}. Content ${message.content}.`,
+        );
+      }
+
       await buildReplyContext(context, message);
       buildMentionsContext(context, message);
 
@@ -64,8 +75,6 @@ export default {
         role: "user",
         parts: currentMessageParts,
       });
-
-      logger.log(`Responding to message ${message.id}.`);
 
       const response = await generateAIResponse({
         conversationHistory,

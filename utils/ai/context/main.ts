@@ -23,6 +23,15 @@ export function buildChannelContext(context: Context, message: Message) {
   channelAttributes.add("type", message.channel.type.toString());
 }
 
+export function buildDMContext(context: Context, message: Message) {
+  const channelAttributes = context
+    .add("channel-attributes")
+    .desc("Details about the direct message channel");
+  channelAttributes.add("id", message.channel.id);
+  channelAttributes.add("name", "Direct Message");
+  channelAttributes.add("type", "DM");
+}
+
 export function buildUserContext(context: Context, message: Message) {
   const userAttributes = context
     .add("user-attributes")

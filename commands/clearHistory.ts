@@ -1,4 +1,5 @@
 import {
+  ChannelType,
   ChatInputCommandInteraction,
   MessageFlags,
   SlashCommandBuilder,
@@ -12,7 +13,9 @@ export default {
   async execute(data: { interaction: ChatInputCommandInteraction }) {
     const interaction = data.interaction;
 
-    if (!interaction.memberPermissions?.has("ManageMessages")) {
+    const isDm = interaction.channel?.type === ChannelType.DM;
+
+    if (!interaction.memberPermissions?.has("ManageMessages") && !isDm) {
       await interaction.reply({
         content: "You do not have the permission to use this command.",
         flags: MessageFlags.Ephemeral,
