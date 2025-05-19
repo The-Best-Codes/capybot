@@ -17,6 +17,7 @@ import {
 import { buildConversationHistory } from "../utils/ai/conversationHistory";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { buildImageParts } from "../utils/ai/imageParts";
+import { buildMentionContext } from "../utils/ai/mentionContextBuilder";
 import { Context } from "../utils/contextBuilder";
 import { logger } from "../utils/logger";
 
@@ -39,6 +40,7 @@ export default {
       buildServerContext(context, message);
       buildChannelContext(context, message);
       await buildReplyContext(context, message);
+      buildMentionContext(context, message);
 
       const conversationHistory: Content[] = await buildConversationHistory(
         client,
