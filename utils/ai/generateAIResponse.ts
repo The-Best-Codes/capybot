@@ -10,6 +10,7 @@ const MAX_TOOL_CALL_STEPS = 5;
 async function executeTool(
   toolName: string | undefined,
   args: any,
+  guildId?: string,
 ): Promise<any> {
   if (!toolName) {
     throw new Error("Tool name is required");
@@ -21,17 +22,19 @@ async function executeTool(
   }
 
   const tool = tools[toolName];
-  return await tool.function(args);
+  return await tool.function({ ...args, guildId });
 }
 
 export async function generateAIResponse({
   conversationHistory,
   discordAppId,
   modelName = process.env.GEMINI_AI_MODEL || "gemini-2.0-flash-001",
+  guildId,
 }: {
   conversationHistory: Content[];
   discordAppId: string;
   modelName?: string;
+  guildId?: string;
 }) {
   let currentHistory = [...conversationHistory];
   let steps = 0;
@@ -74,6 +77,7 @@ export async function generateAIResponse({
         const toolResult = await executeTool(
           functionCall.name,
           functionCall.args,
+          guildId,
         );
         logger.verbose(`Tool execution successful:`, toolResult);
 

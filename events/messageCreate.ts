@@ -73,9 +73,12 @@ export default {
         parts: currentMessageParts,
       });
 
+      const guildId = message.guild?.id;
+
       const response = await generateAIResponse({
         conversationHistory,
         discordAppId: process.env.DISCORD_APP_ID || "unknown",
+        guildId: guildId,
       });
 
       const responseText = response;
