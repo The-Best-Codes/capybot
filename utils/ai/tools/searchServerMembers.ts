@@ -28,10 +28,6 @@ export const searchServerMembers: ToolDefinition = {
         description:
           "The search query to match member display names or usernames against",
       },
-      guildId: {
-        type: Type.STRING,
-        description: "The ID of the Discord guild to search in.",
-      },
       attributes: {
         type: Type.ARRAY,
         items: {
@@ -42,7 +38,7 @@ export const searchServerMembers: ToolDefinition = {
           "Optional list of member attributes to retrieve. Leave empty to get all available information.",
       },
     },
-    required: ["query", "guildId"],
+    required: ["query"],
   },
   function: async (args: {
     query: string;

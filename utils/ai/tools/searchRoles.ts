@@ -24,10 +24,6 @@ export const searchRoles: ToolDefinition = {
         type: Type.STRING,
         description: "The search query to match role names against",
       },
-      guildId: {
-        type: Type.STRING,
-        description: "The ID of the Discord guild to search in.",
-      },
       attributes: {
         type: Type.ARRAY,
         items: {
@@ -38,7 +34,7 @@ export const searchRoles: ToolDefinition = {
           "Optional list of role attributes to retrieve. Leave empty to get all available information.",
       },
     },
-    required: ["query", "guildId"],
+    required: ["query"],
   },
   function: async (args: {
     query: string;

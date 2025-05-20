@@ -25,10 +25,6 @@ export const searchChannels: ToolDefinition = {
         description:
           "The search query to match channel names or topics against",
       },
-      guildId: {
-        type: Type.STRING,
-        description: "The ID of the Discord guild to search in.",
-      },
       attributes: {
         type: Type.ARRAY,
         items: {
@@ -39,7 +35,7 @@ export const searchChannels: ToolDefinition = {
           "Optional list of channel attributes to retrieve. Leave empty to get all available information.",
       },
     },
-    required: ["query", "guildId"],
+    required: ["query"],
   },
   function: async (args: {
     query: string;
