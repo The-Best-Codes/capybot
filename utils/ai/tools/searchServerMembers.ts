@@ -75,7 +75,16 @@ export const searchServerMembers: ToolDefinition = {
         return { success: false, message: "Guild not found" };
       }
 
-      const members = await guild.members.fetch();
+      let members;
+      try {
+        members = await guild.members.fetch();
+      } catch (error) {
+        console.error("Failed to fetch all members:", error);
+        return {
+          success: false,
+          message: "Failed to retrieve all members, returning a partial list.",
+        };
+      }
 
       if (!members) {
         return { success: false, message: "No members found in this guild" };
