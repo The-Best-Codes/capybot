@@ -16,6 +16,7 @@ const USER_ATTRIBUTES = [
   "accentColor",
   "flags",
   "globalName",
+  "avatarDecorationData",
 ] as const;
 
 type UserAttribute = (typeof USER_ATTRIBUTES)[number];
@@ -50,7 +51,7 @@ export const getUserInfo: ToolDefinition = {
         return { success: false, message: "User not found" };
       }
 
-      const userInfo = {
+      const userInfo: Record<string, any> = {
         id: user.id,
         username: user.username,
         displayName: user.displayName,
@@ -64,6 +65,7 @@ export const getUserInfo: ToolDefinition = {
         accentColor: user.accentColor,
         flags: user.flags?.toJSON() || null,
         globalName: user.globalName,
+        avatarDecorationData: user.avatarDecorationData,
       };
 
       if (args.attributes && args.attributes.length > 0) {
