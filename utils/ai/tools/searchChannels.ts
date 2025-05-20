@@ -78,59 +78,95 @@ export const searchChannels: ToolDefinition = {
         return { success: false, message: "No channels found in this guild" };
       }
 
-      let matchingChannels = channels;
+      let channelsArray = [...channels.values()].filter(
+        (channel) => channel !== null,
+      );
 
       if (args.query) {
         const searchFields = args.searchFields || ["name", "topic"];
         const algorithm = args.algorithm || "levenshtein";
+        const query = args.query.toLowerCase();
 
-        matchingChannels = channels.filter((channel) => {
-          if (!channel) return false;
+        if (algorithm === "exact") {
+          channelsArray = channelsArray.filter((channel) => {
+            if (!channel) return false;
 
-          for (const field of searchFields) {
-            let value: string | undefined;
+            for (const field of searchFields) {
+              let value: string | undefined;
 
-            if (field === "name") {
-              value = channel.name;
-            } else if (field === "topic") {
-              // @ts-ignore
-              value = channel.topic;
-            } else if (field === "id") {
-              value = channel.id;
-            } else if (field === "type") {
-              value = channel.type.toString();
-            } else if (field === "nsfw") {
-              // @ts-ignore
-              value = channel.nsfw ? "true" : "false";
-            } else if (field === "createdAt") {
-              value = channel.createdAt.toISOString();
-            } else if (field === "createdTimestamp") {
-              value = channel.createdTimestamp.toString();
-            }
+              if (field === "name") {
+                value = channel.name;
+              } else if (field === "topic") {
+                // @ts-ignore
+                value = channel.topic;
+              } else if (field === "id") {
+                value = channel.id;
+              } else if (field === "type") {
+                value = channel.type.toString();
+              } else if (field === "nsfw") {
+                // @ts-ignore
+                value = channel.nsfw ? "true" : "false";
+              } else if (field === "createdAt") {
+                value = channel.createdAt.toISOString();
+              } else if (field === "createdTimestamp") {
+                value = channel.createdTimestamp.toString();
+              }
 
-            if (value) {
-              const query = args.query!.toLowerCase();
-              const fieldValue = value.toLowerCase();
-
-              if (algorithm === "exact" && fieldValue.includes(query)) {
-                return true;
-              } else if (
-                algorithm === "levenshtein" &&
-                distance(fieldValue, query) <= 2
-              ) {
+              if (value && value.toLowerCase().includes(query)) {
                 return true;
               }
             }
-          }
+            return false;
+          });
+        } else if (algorithm === "levenshtein") {
+          // For levenshtein, calculate distance for each channel and sort by closest match
+          channelsArray = channelsArray
+            .map((channel) => {
+              if (!channel) return { channel, bestDistance: Infinity };
 
-          return false;
-        });
+              let bestDistance = Infinity;
+
+              for (const field of searchFields) {
+                let value: string | undefined;
+
+                if (field === "name") {
+                  value = channel.name;
+                } else if (field === "topic") {
+                  // @ts-ignore
+                  value = channel.topic;
+                } else if (field === "id") {
+                  value = channel.id;
+                } else if (field === "type") {
+                  value = channel.type.toString();
+                } else if (field === "nsfw") {
+                  // @ts-ignore
+                  value = channel.nsfw ? "true" : "false";
+                } else if (field === "createdAt") {
+                  value = channel.createdAt.toISOString();
+                } else if (field === "createdTimestamp") {
+                  value = channel.createdTimestamp.toString();
+                }
+
+                if (value) {
+                  const fieldValue = value.toLowerCase();
+                  const currentDistance = distance(fieldValue, query);
+                  bestDistance = Math.min(bestDistance, currentDistance);
+                }
+              }
+
+              return { channel, bestDistance };
+            })
+            .filter((item) => item.channel !== null)
+            .sort((a, b) => a.bestDistance - b.bestDistance)
+            .map((item) => item.channel);
+        }
       }
 
       let limit = args.limit || 5;
       limit = Math.max(1, Math.min(limit, 50));
 
-      const channelInfo = matchingChannels
+      const channelInfo = channelsArray
+        .slice(0, limit)
         .map((channel) => {
           if (!channel) return null;
 

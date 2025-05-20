@@ -78,53 +78,84 @@ export const searchRoles: ToolDefinition = {
       }
 
       let matchingRoles = roles;
+      let rolesArray = [...roles.values()];
 
       if (args.query) {
         const searchFields = args.searchFields || ["name"];
         const algorithm = args.algorithm || "levenshtein";
+        const query = args.query.toLowerCase();
 
-        matchingRoles = roles.filter((role) => {
-          for (const field of searchFields) {
-            let value: string | undefined;
+        if (algorithm === "exact") {
+          rolesArray = rolesArray.filter((role) => {
+            for (const field of searchFields) {
+              let value: string | undefined;
 
-            if (field === "name") {
-              value = role.name;
-            } else if (field === "id") {
-              value = role.id;
-            } else if (field === "color") {
-              value = role.hexColor;
-            } else if (field === "permissions") {
-              value = JSON.stringify(role.permissions.toJSON());
-            } else if (field === "createdAt") {
-              value = role.createdAt.toISOString();
-            } else if (field === "createdTimestamp") {
-              value = role.createdTimestamp.toString();
-            } else if (field === "mentionable") {
-              value = role.mentionable ? "true" : "false";
-            }
+              if (field === "name") {
+                value = role.name;
+              } else if (field === "id") {
+                value = role.id;
+              } else if (field === "color") {
+                value = role.hexColor;
+              } else if (field === "permissions") {
+                value = JSON.stringify(role.permissions.toJSON());
+              } else if (field === "createdAt") {
+                value = role.createdAt.toISOString();
+              } else if (field === "createdTimestamp") {
+                value = role.createdTimestamp.toString();
+              } else if (field === "mentionable") {
+                value = role.mentionable ? "true" : "false";
+              }
 
-            if (value) {
-              const query = args.query!.toLowerCase();
-              const fieldValue = value.toLowerCase();
-
-              if (algorithm === "exact" && fieldValue.includes(query)) {
-                return true;
-              } else if (
-                algorithm === "levenshtein" &&
-                distance(fieldValue, query) <= 2
-              ) {
+              if (value && value.toLowerCase().includes(query)) {
                 return true;
               }
             }
-          }
-          return false;
-        });
+            return false;
+          });
+        } else if (algorithm === "levenshtein") {
+          // For levenshtein, calculate distance for each role and sort by closest match
+          rolesArray = rolesArray
+            .map((role) => {
+              let bestDistance = Infinity;
+
+              for (const field of searchFields) {
+                let value: string | undefined;
+
+                if (field === "name") {
+                  value = role.name;
+                } else if (field === "id") {
+                  value = role.id;
+                } else if (field === "color") {
+                  value = role.hexColor;
+                } else if (field === "permissions") {
+                  value = JSON.stringify(role.permissions.toJSON());
+                } else if (field === "createdAt") {
+                  value = role.createdAt.toISOString();
+                } else if (field === "createdTimestamp") {
+                  value = role.createdTimestamp.toString();
+                } else if (field === "mentionable") {
+                  value = role.mentionable ? "true" : "false";
+                }
+
+                if (value) {
+                  const fieldValue = value.toLowerCase();
+                  const currentDistance = distance(fieldValue, query);
+                  bestDistance = Math.min(bestDistance, currentDistance);
+                }
+              }
+
+              return { role, bestDistance };
+            })
+            .sort((a, b) => a.bestDistance - b.bestDistance)
+            .map((item) => item.role);
+        }
       }
 
       let limit = args.limit || 5;
       limit = Math.max(1, Math.min(limit, 50));
 
-      const roleInfo = matchingRoles
+      const roleInfo = rolesArray
+        .slice(0, limit)
         .map((role) => {
           const baseInfo: Record<string, any> = {
             id: role.id,

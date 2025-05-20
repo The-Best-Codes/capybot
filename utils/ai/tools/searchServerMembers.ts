@@ -91,61 +91,101 @@ export const searchServerMembers: ToolDefinition = {
       }
 
       let matchingMembers = members;
+      let membersArray = [...members.values()];
 
       if (args.query) {
         const searchFields = args.searchFields || ["displayName", "username"];
         const algorithm = args.algorithm || "levenshtein";
+        const query = args.query.toLowerCase();
 
-        matchingMembers = members.filter((member) => {
-          for (const field of searchFields) {
-            let value: string | undefined;
+        if (algorithm === "exact") {
+          membersArray = membersArray.filter((member) => {
+            for (const field of searchFields) {
+              let value: string | undefined;
 
-            if (field === "displayName") {
-              value = member.displayName;
-            } else if (field === "id") {
-              value = member.id;
-            } else if (field === "joinedAt") {
-              value = member.joinedAt?.toISOString();
-            } else if (field === "joinedTimestamp") {
-              value = member.joinedTimestamp?.toString();
-            } else if (field === "nickname") {
-              value = member?.nickname || undefined;
-            } else if (field === "premiumSince") {
-              value = member.premiumSince?.toISOString();
-            } else if (field === "premiumSinceTimestamp") {
-              value = member.premiumSinceTimestamp?.toString();
-            } else if (field === "pending") {
-              value = member.pending?.toString();
-            } else if (field === "communicationDisabledUntil") {
-              value = member.communicationDisabledUntil?.toISOString();
-            } else if (field === "communicationDisabledUntilTimestamp") {
-              value = member.communicationDisabledUntilTimestamp?.toString();
-            } else {
-              value = member.user.username; // Default to username if field is not found
-            }
+              if (field === "displayName") {
+                value = member.displayName;
+              } else if (field === "id") {
+                value = member.id;
+              } else if (field === "joinedAt") {
+                value = member.joinedAt?.toISOString();
+              } else if (field === "joinedTimestamp") {
+                value = member.joinedTimestamp?.toString();
+              } else if (field === "nickname") {
+                value = member?.nickname || undefined;
+              } else if (field === "premiumSince") {
+                value = member.premiumSince?.toISOString();
+              } else if (field === "premiumSinceTimestamp") {
+                value = member.premiumSinceTimestamp?.toString();
+              } else if (field === "pending") {
+                value = member.pending?.toString();
+              } else if (field === "communicationDisabledUntil") {
+                value = member.communicationDisabledUntil?.toISOString();
+              } else if (field === "communicationDisabledUntilTimestamp") {
+                value = member.communicationDisabledUntilTimestamp?.toString();
+              } else {
+                value = member.user.username; // Default to username if field is not found
+              }
 
-            if (value) {
-              const query = args.query!.toLowerCase();
-              const fieldValue = value.toLowerCase();
-
-              if (algorithm === "exact" && fieldValue.includes(query)) {
-                return true;
-              } else if (
-                algorithm === "levenshtein" &&
-                distance(fieldValue, query) <= 2
-              ) {
+              if (value && value.toLowerCase().includes(query)) {
                 return true;
               }
             }
-          }
-          return false;
-        });
+            return false;
+          });
+        } else if (algorithm === "levenshtein") {
+          // For levenshtein, calculate distance for each member and sort by closest match
+          membersArray = membersArray
+            .map((member) => {
+              let bestDistance = Infinity;
+
+              for (const field of searchFields) {
+                let value: string | undefined;
+
+                if (field === "displayName") {
+                  value = member.displayName;
+                } else if (field === "id") {
+                  value = member.id;
+                } else if (field === "joinedAt") {
+                  value = member.joinedAt?.toISOString();
+                } else if (field === "joinedTimestamp") {
+                  value = member.joinedTimestamp?.toString();
+                } else if (field === "nickname") {
+                  value = member?.nickname || undefined;
+                } else if (field === "premiumSince") {
+                  value = member.premiumSince?.toISOString();
+                } else if (field === "premiumSinceTimestamp") {
+                  value = member.premiumSinceTimestamp?.toString();
+                } else if (field === "pending") {
+                  value = member.pending?.toString();
+                } else if (field === "communicationDisabledUntil") {
+                  value = member.communicationDisabledUntil?.toISOString();
+                } else if (field === "communicationDisabledUntilTimestamp") {
+                  value =
+                    member.communicationDisabledUntilTimestamp?.toString();
+                } else {
+                  value = member.user.username; // Default to username if field is not found
+                }
+
+                if (value) {
+                  const fieldValue = value.toLowerCase();
+                  const currentDistance = distance(fieldValue, query);
+                  bestDistance = Math.min(bestDistance, currentDistance);
+                }
+              }
+
+              return { member, bestDistance };
+            })
+            .sort((a, b) => a.bestDistance - b.bestDistance)
+            .map((item) => item.member);
+        }
       }
 
       let limit = args.limit || 5;
       limit = Math.max(1, Math.min(limit, 50));
 
-      const memberInfo = matchingMembers
+      const memberInfo = membersArray
+        .slice(0, limit)
         .map((member) => {
           const baseInfo: Record<string, any> = {
             id: member.id,
