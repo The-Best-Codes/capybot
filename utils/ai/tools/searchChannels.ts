@@ -49,7 +49,7 @@ export const searchChannels: ToolDefinition = {
       algorithm: {
         type: Type.STRING,
         enum: ["exact", "levenshtein"],
-        description: "The search algorithm to use. Defaults to exact.",
+        description: "The search algorithm to use. Defaults to levenshtein.",
       },
       limit: {
         type: Type.NUMBER,
@@ -82,7 +82,7 @@ export const searchChannels: ToolDefinition = {
 
       if (args.query) {
         const searchFields = args.searchFields || ["name", "topic"];
-        const algorithm = args.algorithm || "exact";
+        const algorithm = args.algorithm || "levenshtein";
 
         matchingChannels = channels.filter((channel) => {
           if (!channel) return false;

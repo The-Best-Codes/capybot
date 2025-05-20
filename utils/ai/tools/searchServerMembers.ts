@@ -51,7 +51,7 @@ export const searchServerMembers: ToolDefinition = {
       algorithm: {
         type: Type.STRING,
         enum: ["exact", "levenshtein"],
-        description: "The search algorithm to use. Defaults to exact.",
+        description: "The search algorithm to use. Defaults to levenshtein.",
       },
       limit: {
         type: Type.NUMBER,
@@ -85,7 +85,7 @@ export const searchServerMembers: ToolDefinition = {
 
       if (args.query) {
         const searchFields = args.searchFields || ["displayName", "username"];
-        const algorithm = args.algorithm || "exact";
+        const algorithm = args.algorithm || "levenshtein";
 
         matchingMembers = members.filter((member) => {
           for (const field of searchFields) {

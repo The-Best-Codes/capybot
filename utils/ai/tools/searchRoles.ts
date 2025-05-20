@@ -48,7 +48,7 @@ export const searchRoles: ToolDefinition = {
       algorithm: {
         type: Type.STRING,
         enum: ["exact", "levenshtein"],
-        description: "The search algorithm to use. Defaults to exact.",
+        description: "The search algorithm to use. Defaults to levenshtein.",
       },
       limit: {
         type: Type.NUMBER,
@@ -81,7 +81,7 @@ export const searchRoles: ToolDefinition = {
 
       if (args.query) {
         const searchFields = args.searchFields || ["name"];
-        const algorithm = args.algorithm || "exact";
+        const algorithm = args.algorithm || "levenshtein";
 
         matchingRoles = roles.filter((role) => {
           for (const field of searchFields) {
