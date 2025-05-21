@@ -5,6 +5,8 @@ import {
   type OmitPartialGroupDMChannel,
 } from "discord.js";
 import { logger } from "../utils/logger";
+import { generateText } from "ai";
+import { google } from "@ai-sdk/google";
 
 export default {
   event: Events.MessageCreate,
@@ -19,7 +21,20 @@ export default {
     if (!mentionsBot) return;
 
     try {
-      throw new Error("This bot is in development.");
+      // Show typing indicator while generating response
+      await message.channel.sendTyping();
+
+      // Extract the message content, removing the bot mention
+      const cleanContent = message.content.replace(/<@!?\d+>/g, "").trim();
+
+      // Generate AI response using Gemini
+      const { text } = await generateText({
+        model: google(process.env.GEMINI_AI_MODEL || "gemini-2.0-flash"),
+        prompt: cleanContent,
+      });
+
+      // Reply with the AI-generated response
+      await message.reply(text);
     } catch (error) {
       logger.error(`Error generating AI response: ${error}`);
       await message.reply(
