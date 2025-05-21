@@ -68,7 +68,8 @@ export async function generateAIResponse({
 
     const aiResponse = response.candidates?.[0]?.content;
     if (!aiResponse || !aiResponse.parts || aiResponse.parts.length === 0) {
-      console.log("No response parts from AI");
+      logger.log("No response parts from AI");
+      logger.verbose("AI response: ", response);
       return "Error: No response from AI";
     }
 
@@ -111,8 +112,21 @@ export async function generateAIResponse({
       logger.verbose("AI returned text response (no function call)");
       finalResponse = aiPart.text;
       break;
+    } else if (aiPart.thought !== undefined) {
+      logger.verbose("AI returned a thinking response");
+      currentHistory.push({
+        role: "model",
+        parts: [{ thought: aiPart.thought, text: aiPart.text || "" }],
+      });
+
+      if (steps >= MAX_TOOL_CALL_STEPS) {
+        finalResponse = aiPart.text || "Warning: The AI is still thinking...";
+      }
     } else {
-      logger.verbose("AI response contained neither text nor function call");
+      logger.verbose(
+        "AI response contained neither text, thinking part, nor function call",
+      );
+      logger.verbose("Response part:", JSON.stringify(aiPart));
       finalResponse = "Error: Invalid AI response format";
       break;
     }
