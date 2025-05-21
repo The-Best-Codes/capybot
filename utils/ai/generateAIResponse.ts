@@ -28,17 +28,22 @@ async function executeTool(
 export async function generateAIResponse({
   conversationHistory,
   discordAppId,
-  modelName = process.env.GEMINI_AI_MODEL || "gemini-2.0-flash-001",
+  modelName = process.env.GEMINI_AI_MODEL || "",
   guildId,
 }: {
   conversationHistory: Content[];
   discordAppId: string;
-  modelName?: string;
+  modelName: string;
   guildId?: string;
 }) {
   let currentHistory = [...conversationHistory];
   let steps = 0;
   let finalResponse = "";
+
+  if (modelName === "") {
+    logger.error("Gemini AI Model is not provided");
+    return "Error: Gemini AI Model is not set";
+  }
 
   while (steps < MAX_TOOL_CALL_STEPS) {
     steps++;
@@ -64,7 +69,7 @@ export async function generateAIResponse({
     const aiResponse = response.candidates?.[0]?.content;
     if (!aiResponse || !aiResponse.parts || aiResponse.parts.length === 0) {
       console.log("No response parts from AI");
-      return "No response from AI";
+      return "Error: No response from AI";
     }
 
     const aiPart = aiResponse.parts[0];
@@ -99,7 +104,7 @@ export async function generateAIResponse({
         });
       } catch (error: any) {
         logger.error(`Error executing tool ${functionCall.name}:`, error);
-        finalResponse = `Error executing tool ${functionCall.name}: ${error.message}`;
+        finalResponse = `Error: Issue executing tool ${functionCall.name}: ${error.message}`;
         break;
       }
     } else if (aiPart.text) {
@@ -108,7 +113,7 @@ export async function generateAIResponse({
       break;
     } else {
       logger.verbose("AI response contained neither text nor function call");
-      finalResponse = "Invalid AI response format";
+      finalResponse = "Error: Invalid AI response format";
       break;
     }
   }
@@ -118,5 +123,5 @@ export async function generateAIResponse({
       "Reached maximum tool call steps. Could not complete the request.";
   }
 
-  return finalResponse || "No response";
+  return finalResponse || "Error: No response from AI";
 }
