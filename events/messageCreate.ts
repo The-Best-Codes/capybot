@@ -16,6 +16,8 @@ export default {
 
     const mentionsBot = message.mentions.users.has(client.user?.id || "");
 
+    if (!mentionsBot) return;
+
     try {
       throw new Error("This bot is in development.");
     } catch (error) {
