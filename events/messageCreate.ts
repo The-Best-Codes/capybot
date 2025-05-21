@@ -18,6 +18,7 @@ import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { buildImageParts } from "../utils/ai/imageParts";
 import { Context } from "../utils/contextBuilder";
 import { logger } from "../utils/logger";
+import { escapeMentions } from "../utils/escapeMentions";
 
 export default {
   event: Events.MessageCreate,
@@ -79,6 +80,7 @@ export default {
         conversationHistory,
         discordAppId: process.env.DISCORD_APP_ID || "unknown",
         guildId: guildId,
+        modelName: process.env.GEMINI_AI_MODEL || "",
       });
 
       const responseText = response;
@@ -92,7 +94,7 @@ export default {
         }
 
         await message.reply({
-          content: `${trimmedResponse}`,
+          content: `${escapeMentions(trimmedResponse)}`,
         });
       } else {
         await message.reply("Oops! The AI didn't respond.");
