@@ -23,11 +23,23 @@ export async function buildConversationHistory(
       .filter((msg) => msg.id !== message.id)
       .reverse();
 
-    const clearMarkerIndex = history.findIndex((msg) =>
-      msg.content.includes(clearHistoryMarker),
-    );
-    if (clearMarkerIndex !== -1) {
-      historyStartIndex = clearMarkerIndex + 1;
+    let lastMarkerIndex = -1;
+    let currentIndex = 0;
+    while (currentIndex < history.length) {
+      const nextMarkerIndex = history.findIndex(
+        (msg, index) =>
+          index >= currentIndex && msg.content.includes(clearHistoryMarker),
+      );
+      if (nextMarkerIndex !== -1) {
+        lastMarkerIndex = nextMarkerIndex;
+        currentIndex = nextMarkerIndex + 1;
+      } else {
+        break;
+      }
+    }
+
+    if (lastMarkerIndex !== -1) {
+      historyStartIndex = lastMarkerIndex + 1;
     }
 
     for (let i = historyStartIndex; i < history.length; i++) {

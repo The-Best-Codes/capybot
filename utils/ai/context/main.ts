@@ -194,7 +194,7 @@ export async function buildReferenceContext(
 
   const referenceAttributes = context
     .add("reference-data")
-    .desc("The sent message is a reply to another message");
+    .desc("The message sent is a reply to another message");
 
   try {
     const referencedMessage = await message.fetchReference();

@@ -100,7 +100,7 @@ export default {
       if (!fs.existsSync(CONTEXT_DIR)) {
         fs.mkdirSync(CONTEXT_DIR, { recursive: true });
       }
-      const contextFilePath = path.join(CONTEXT_DIR, `${message.id}.xml`);
+      const contextFilePath = path.join(CONTEXT_DIR, `${message.id}.html`);
       fs.writeFileSync(contextFilePath, context.toString());
       const messageHistoryFilePath = path.join(
         CONTEXT_DIR,
