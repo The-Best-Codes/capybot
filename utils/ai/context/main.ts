@@ -20,7 +20,6 @@ export function buildChannelContext(context: Context, message: Message) {
   channelAttributes.add("id", message.channel.id);
   // @ts-ignore
   channelAttributes.add("name", message.channel?.name || "Unknown");
-  channelAttributes.add("type", message.channel.type.toString());
 }
 
 export function buildDMContext(context: Context, message: Message) {
@@ -29,7 +28,7 @@ export function buildDMContext(context: Context, message: Message) {
     .desc("Details about the direct message channel");
   channelAttributes.add("id", message.channel.id);
   channelAttributes.add("name", "Direct Message");
-  channelAttributes.add("type", "Direct Message");
+  channelAttributes.add("is-dm", "true");
 }
 
 export function buildUserContext(context: Context, message: Message) {
@@ -59,7 +58,7 @@ export async function buildReplyContext(context: Context, message: Message) {
 
     const userAttrs = replyAttributes
       .add("user-attributes")
-      .desc("Details about the user who sent the message (being replied to)");
+      .desc("Details about the user who sent the message");
     userAttrs.add("id", referencedMessage.author.id);
     if (referencedMessage.member?.nickname) {
       userAttrs.add("server-nickname", referencedMessage.member?.nickname);
@@ -118,7 +117,6 @@ export function buildMentionsContext(context: Context, message: Message) {
       if ("name" in channel && typeof channel.name === "string") {
         channelMention.add("name", channel.name);
       }
-      channelMention.add("type", channel.type.toString());
     });
   }
 
