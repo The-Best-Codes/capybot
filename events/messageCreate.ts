@@ -14,8 +14,8 @@ import {
   buildEntityLookupContext,
   buildMentionsContext,
   buildReplyContext,
-  buildServerContext, // Import the helper
-  type CollectedEntities, // Import the type
+  buildServerContext,
+  type CollectedEntities,
 } from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { buildImageParts } from "../utils/ai/imageParts";
@@ -41,21 +41,19 @@ export default {
     const mentionsEveryone = message.mentions.everyone;
     const shouldRespond = mentionsBot || mentionsEveryone;
 
-    if (!shouldRespond && message.channel.type !== ChannelType.DM) return; // Only respond to DMs if not mentioning bot/everyone
+    if (!shouldRespond && message.channel.type !== ChannelType.DM) return; // Only respond to DMs and messages mentioning the bot or everyone
 
     try {
       await message.channel.sendTyping();
 
       const context = new Context();
 
-      // Initialize the central collection for all entities
       const allMentionedEntities: CollectedEntities = {
         users: new Map(),
         roles: new Map(),
         channels: new Map(),
       };
 
-      // Always add the current message author to the collection first
       addUserToCollection(allMentionedEntities, message.author, message.member);
 
       if (message.guild) {
@@ -71,24 +69,15 @@ export default {
         );
       }
 
-      // Build conversation history, passing the entities collection to be populated
       const conversationHistory: Content[] = await buildConversationHistory(
         client,
         message,
-        allMentionedEntities, // Pass the collection here
+        allMentionedEntities,
         "{% clear_history_before %}",
       );
 
-      // Build reply context for the current message, also populating the entities collection
-      // This will add the author and mentions of the referenced message to the collection
-      await buildReplyContext(context, message, allMentionedEntities); // Pass the collection
-
-      // Build mentions context for the current message, also populating the entities collection
-      // This will add entities mentioned in the current message to the collection
-      buildMentionsContext(context, message, allMentionedEntities); // Pass the collection
-
-      // Now build the centralized entity lookup table in the main context
-      // This uses the collection that was populated by history, reply, and mentions builders
+      await buildReplyContext(context, message, allMentionedEntities);
+      buildMentionsContext(context, message, allMentionedEntities);
       buildEntityLookupContext(context, allMentionedEntities);
 
       const imageParts: Part[] = await buildImageParts(message);
@@ -111,9 +100,16 @@ export default {
       if (!fs.existsSync(CONTEXT_DIR)) {
         fs.mkdirSync(CONTEXT_DIR, { recursive: true });
       }
-      const contextFilePath = path.join(CONTEXT_DIR, `${message.id}.json`);
-      // Save the final context string representation which includes the entity lookup
+      const contextFilePath = path.join(CONTEXT_DIR, `${message.id}.xml`);
       fs.writeFileSync(contextFilePath, context.toString());
+      const messageHistoryFilePath = path.join(
+        CONTEXT_DIR,
+        `${message.id}.json`,
+      );
+      fs.writeFileSync(
+        messageHistoryFilePath,
+        JSON.stringify(conversationHistory),
+      );
       logger.log(`Context saved to ${contextFilePath}`);
       // @@ END REMOVE LATER
 
