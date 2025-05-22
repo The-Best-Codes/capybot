@@ -1,11 +1,248 @@
-import { Message } from "discord.js";
+import { type Channel, GuildMember, Message, Role, User } from "discord.js";
 import client from "../../../clients/discord";
 import { Context } from "../../contextBuilder";
+import { logger } from "../../logger";
+
+export interface CollectedEntities {
+  users: Map<
+    string,
+    { id: string; name: string; isBot?: boolean; isSelf?: boolean }
+  >;
+  roles: Map<string, { id: string; name: string }>;
+  channels: Map<string, { id: string; name: string }>;
+}
+
+export function addUserToCollection(
+  entities: CollectedEntities,
+  user: User | { id: string; name: string; isBot?: boolean; isSelf?: boolean },
+  member?: GuildMember | null,
+) {
+  if (!entities.users.has(user.id)) {
+    if ("displayName" in user) {
+      const fullUser = user as User;
+      const name = member?.nickname || fullUser.displayName;
+      entities.users.set(fullUser.id, {
+        id: fullUser.id,
+        name: name,
+        isBot: fullUser.bot,
+        isSelf: fullUser.id === client.user?.id,
+      });
+    } else {
+      const partialUser = user as {
+        id: string;
+        name: string;
+        isBot?: boolean;
+        isSelf?: boolean;
+      };
+      entities.users.set(partialUser.id, {
+        id: partialUser.id,
+        name: partialUser.name,
+        isBot: partialUser.isBot,
+        isSelf: partialUser.isSelf,
+      });
+    }
+  }
+}
+
+export function addRoleToCollection(
+  entities: CollectedEntities,
+  role: Role | { id: string; name: string },
+) {
+  if (!entities.roles.has(role.id)) {
+    entities.roles.set(role.id, {
+      id: role.id,
+      name: role.name,
+    });
+  }
+}
+
+export function addChannelToCollection(
+  entities: CollectedEntities,
+  channel: Channel | { id: string; name: string },
+) {
+  if (!entities.channels.has(channel.id)) {
+    if ("name" in channel && typeof channel.name === "string") {
+      entities.channels.set(channel.id, {
+        id: channel.id,
+        name: channel?.name ?? "Unknown",
+      });
+    } else {
+      const partialChannel = channel as { id: string; name: string };
+      entities.channels.set(partialChannel.id, {
+        id: partialChannel.id,
+        name: partialChannel.name,
+      });
+    }
+  }
+}
+
+export function buildEntityLookupContext(
+  context: Context,
+  entities: CollectedEntities,
+) {
+  if (
+    entities.users.size === 0 &&
+    entities.roles.size === 0 &&
+    entities.channels.size === 0
+  ) {
+    return;
+  }
+
+  const entityDetails = context
+    .add("entity-details")
+    .desc(
+      "Lookup table for users, roles, and channels mentioned in the conversation",
+    );
+
+  if (entities.users.size > 0) {
+    const usersNode = entityDetails
+      .add("users")
+      .desc("Details for users keyed by ID");
+    for (const [id, details] of entities.users.entries()) {
+      const userNode = usersNode.add(id);
+      userNode.add("id", details.id);
+      userNode.add("name", details.name);
+      if (details.isSelf) {
+        userNode.add("is-self", "true").desc("You (@Capybot)");
+      } else if (details.isBot) {
+        userNode.add("is-bot", "true");
+      }
+    }
+  }
+
+  if (entities.roles.size > 0) {
+    const rolesNode = entityDetails
+      .add("roles")
+      .desc("Details for roles keyed by ID");
+    for (const [id, details] of entities.roles.entries()) {
+      const roleNode = rolesNode.add(id);
+      roleNode.add("id", details.id);
+      roleNode.add("name", details.name);
+    }
+  }
+
+  if (entities.channels.size > 0) {
+    const channelsNode = entityDetails
+      .add("channels")
+      .desc("Details for channels keyed by ID");
+    for (const [id, details] of entities.channels.entries()) {
+      const channelNode = channelsNode.add(id);
+      channelNode.add("id", details.id);
+      channelNode.add("name", details.name);
+    }
+  }
+}
+
+export function buildMentionsContext(
+  context: Context,
+  message: Message,
+  entities: CollectedEntities,
+) {
+  const hasMentions =
+    message.mentions.users.size > 0 ||
+    message.mentions.roles.size > 0 ||
+    message.mentions.channels.size > 0 ||
+    message.mentions.everyone;
+
+  if (!hasMentions) return;
+
+  const mentionsContext = context
+    .add("mentions-in-current-message")
+    .desc(
+      "Mentions in the current message. Refer to 'entity-details' for full info.",
+    );
+
+  if (message.mentions.users.size > 0) {
+    const userIdsNode = mentionsContext.add("user-ids");
+    message.mentions.users.forEach((user) => {
+      addUserToCollection(
+        entities,
+        user,
+        message.guild?.members.cache.get(user.id),
+      );
+      userIdsNode.add(user.id, "true");
+    });
+  }
+
+  if (message.mentions.channels.size > 0) {
+    const channelIdsNode = mentionsContext.add("channel-ids");
+    message.mentions.channels.forEach((channel) => {
+      addChannelToCollection(entities, channel);
+      channelIdsNode.add(channel.id, "true");
+    });
+  }
+
+  if (message.mentions.roles.size > 0) {
+    const roleIdsNode = mentionsContext.add("role-ids");
+    message.mentions.roles.forEach((role) => {
+      addRoleToCollection(entities, role);
+      roleIdsNode.add(role.id, "true");
+    });
+  }
+
+  if (message.mentions.everyone) {
+    mentionsContext.add("everyone", "true").desc("@everyone or @here mention");
+  }
+}
+
+export async function buildReferenceContext(
+  context: Context,
+  message: Message,
+  entities: CollectedEntities,
+) {
+  if (!message.reference?.messageId) return;
+
+  const referenceAttributes = context
+    .add("reference-data")
+    .desc("The message sent is a reply to another message");
+
+  try {
+    const referencedMessage = await message.fetchReference();
+
+    addUserToCollection(
+      entities,
+      referencedMessage.author,
+      referencedMessage.member,
+    );
+
+    referencedMessage.mentions.users.forEach((user) =>
+      addUserToCollection(
+        entities,
+        user,
+        referencedMessage.guild?.members.cache.get(user.id),
+      ),
+    );
+    referencedMessage.mentions.roles.forEach((role) =>
+      addRoleToCollection(entities, role),
+    );
+    referencedMessage.mentions.channels.forEach((channel) => {
+      addChannelToCollection(entities, channel);
+    });
+
+    referenceAttributes.add("referenced-message-id", referencedMessage.id);
+    referenceAttributes.add(
+      "referenced-message-author-id",
+      referencedMessage.author.id,
+    );
+    referenceAttributes.add(
+      "referenced-message-content",
+      referencedMessage.content,
+    );
+  } catch (error) {
+    referenceAttributes.add(
+      "error",
+      "Could not fetch referenced message or its details",
+    );
+    logger.warn(
+      `Error fetching referenced message ${message.reference?.messageId} for context: ${error}`,
+    );
+  }
+}
 
 export function buildServerContext(context: Context, message: Message) {
   const serverAttributes = context
     .add("server-attributes")
-    .desc("Details about the server the message was sent in");
+    .desc("Details about the server");
   serverAttributes.add("id", message.guild?.id || "");
   serverAttributes.add("name", message.guild?.name || "");
   serverAttributes.add(
@@ -17,10 +254,10 @@ export function buildServerContext(context: Context, message: Message) {
 export function buildChannelContext(context: Context, message: Message) {
   const channelAttributes = context
     .add("channel-attributes")
-    .desc("Details about the channel the message was sent in");
+    .desc("Details about the channel");
   channelAttributes.add("id", message.channel.id);
   // @ts-ignore
-  channelAttributes.add("name", message.channel?.name || "Unknown");
+  channelAttributes.add("name", (message.channel as any)?.name || "Unknown");
 }
 
 export function buildDMContext(context: Context, message: Message) {
@@ -30,178 +267,4 @@ export function buildDMContext(context: Context, message: Message) {
   channelAttributes.add("id", message.channel.id);
   channelAttributes.add("name", "Direct Message");
   channelAttributes.add("is-dm", "true");
-}
-
-export function buildUserContext(context: Context, message: Message) {
-  const userAttributes = context
-    .add("user-attributes")
-    .desc("Details about the user who sent the message");
-  userAttributes.add("id", message.author.id);
-  if (message.member?.nickname) {
-    userAttributes
-      .add("name", message.member?.nickname)
-      .desc("Server nickname (preferred)");
-  } else {
-    userAttributes
-      .add("name", message.author.displayName)
-      .desc("Discord display name (preferred)");
-  }
-
-  if (message.author.id === client.user?.id) {
-    userAttributes.add("is-self", "true").desc("You (@Capybot)");
-  }
-  if (message.author.bot) {
-    userAttributes.add("is-bot", "true");
-  }
-}
-
-export async function buildReplyContext(context: Context, message: Message) {
-  if (!message.reference) return;
-
-  const replyAttributes = context
-    .add("reply-data")
-    .desc("The sent message is a reply to another message");
-
-  try {
-    const referencedMessage = await message.fetchReference();
-    const replyMessageAttributes = replyAttributes
-      .add("message-attributes")
-      .desc("Details about the referenced message");
-    replyMessageAttributes.add("id", referencedMessage.id);
-    replyMessageAttributes.add("content", referencedMessage.content);
-
-    const userAttrs = replyMessageAttributes.add("user-attributes");
-    userAttrs.add("id", referencedMessage.author.id);
-    if (referencedMessage.member?.nickname) {
-      userAttrs
-        .add("name", referencedMessage.member?.nickname)
-        .desc("Server nickname (preferred)");
-    } else {
-      userAttrs
-        .add("name", referencedMessage.author.displayName)
-        .desc("Discord display name (preferred)");
-    }
-    if (referencedMessage.author.id === client.user?.id) {
-      userAttrs.add("is-self", "true").desc("You (@Capybot)");
-    }
-    if (referencedMessage.author.bot) {
-      userAttrs.add("is-bot", "true");
-    }
-  } catch (error) {
-    replyAttributes.add("error", "Could not fetch referenced message");
-  }
-}
-
-export function buildMentionsContext(context: Context, message: Message) {
-  const botMentioned = message.mentions.users.has(
-    client.user?.id || "dummy_id_to_prevent_undefined_lookup",
-  );
-  if (botMentioned) {
-    context
-      .add("bot-mentioned", "true")
-      .desc("You (@Capybot) were mentioned in this message");
-  }
-
-  const hasMentions =
-    message.mentions.users.size > 0 ||
-    message.mentions.roles.size > 0 ||
-    message.mentions.channels.size > 0 ||
-    message.mentions.everyone;
-
-  if (!hasMentions) return;
-
-  const mentionsContext = context
-    .add("mentions")
-    .desc("Information about mentions found in the message content");
-
-  const mentionedUserNames: string[] = [];
-  const mentionedChannelNames: string[] = [];
-  const mentionedRoleNames: string[] = [];
-  let everyoneMentioned = false;
-
-  if (message.mentions.users.size > 0) {
-    const userMentions = mentionsContext
-      .add("users")
-      .desc("User mentions found in the message");
-    message.mentions.users.forEach((user) => {
-      const userMention = userMentions
-        .add(`user-${user.id}`)
-        .desc(`Details for user mention with ID ${user.id}`);
-      userMention.add("id", user.id);
-      const member = message.guild?.members.cache.get(user.id);
-      const name = member?.nickname || user.displayName;
-      const nameDesc = member?.nickname
-        ? "Server nickname (preferred)"
-        : "Discord display name (preferred)";
-      userMention.add("name", name).desc(nameDesc);
-
-      mentionedUserNames.push(
-        `${name}${user.id === client.user?.id ? " (You)" : ""}`,
-      );
-
-      if (user.bot) {
-        userMention.add("is-bot", "true");
-      }
-      if (user.id === client.user?.id) {
-        userMention.add("is-self", "true").desc("You (@Capybot)");
-      }
-    });
-  }
-
-  if (message.mentions.channels.size > 0) {
-    const channelMentions = mentionsContext
-      .add("channels")
-      .desc("Channel mentions found in the message");
-    message.mentions.channels.forEach((channel) => {
-      const channelMention = channelMentions
-        .add(`channel-${channel.id}`)
-        .desc(`Details for channel mention with ID ${channel.id}`);
-      channelMention.add("id", channel.id);
-      if ("name" in channel && typeof channel.name === "string") {
-        channelMention.add("name", channel.name);
-        mentionedChannelNames.push(channel.name);
-      }
-    });
-  }
-
-  if (message.mentions.roles.size > 0) {
-    const roleMentions = mentionsContext
-      .add("roles")
-      .desc("Role mentions found in the message");
-    message.mentions.roles.forEach((role) => {
-      const roleMention = roleMentions
-        .add(`role-${role.id}`)
-        .desc(`Details for role mention with ID ${role.id}`);
-      roleMention.add("id", role.id);
-      roleMention.add("name", role.name);
-      mentionedRoleNames.push(role.name);
-    });
-  }
-
-  if (message.mentions.everyone) {
-    mentionsContext
-      .add("everyone", "true")
-      .desc("The @everyone or @here mention was used");
-    everyoneMentioned = true;
-  }
-
-  const summaryParts: string[] = [];
-  if (mentionedUserNames.length > 0) {
-    summaryParts.push(`Users: [${mentionedUserNames.join(", ")}]`);
-  }
-  if (mentionedChannelNames.length > 0) {
-    summaryParts.push(`Channels: [${mentionedChannelNames.join(", ")}]`);
-  }
-  if (mentionedRoleNames.length > 0) {
-    summaryParts.push(`Roles: [${mentionedRoleNames.join(", ")}]`);
-  }
-  if (everyoneMentioned) {
-    summaryParts.push(`Everyone: [True]`);
-  }
-
-  if (summaryParts.length > 0) {
-    mentionsContext
-      .add("summary", summaryParts.join("; "))
-      .desc("A concise summary of mentions");
-  }
 }

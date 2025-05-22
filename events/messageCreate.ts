@@ -8,23 +8,20 @@ import {
 } from "discord.js";
 import { buildConversationHistory } from "../utils/ai/context/history";
 import {
+  addUserToCollection,
   buildChannelContext,
   buildDMContext,
+  buildEntityLookupContext,
   buildMentionsContext,
-  buildReplyContext,
+  buildReferenceContext,
   buildServerContext,
+  type CollectedEntities,
 } from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { buildImageParts } from "../utils/ai/imageParts";
 import { Context } from "../utils/contextBuilder";
-import { logger } from "../utils/logger";
 import { escapeMentions } from "../utils/escapeMentions";
-// @@ REMOVE LATER
-import * as fs from "node:fs";
-import * as path from "node:path";
-
-const CONTEXT_DIR = path.join(__dirname, "../data/context");
-// @@ END REMOVE LATER
+import { logger } from "../utils/logger";
 
 export default {
   event: Events.MessageCreate,
@@ -38,15 +35,25 @@ export default {
     const mentionsEveryone = message.mentions.everyone;
     const shouldRespond = mentionsBot || mentionsEveryone;
 
-    if (!shouldRespond && message.channel.type !== ChannelType.DM) return; // Only respond to DMs if not mentioning bot/everyone
+    if (!shouldRespond && message.channel.type !== ChannelType.DM) return; // Only respond to DMs and messages mentioning the bot or everyone
 
     try {
       await message.channel.sendTyping();
 
       const context = new Context();
 
+      const allMentionedEntities: CollectedEntities = {
+        users: new Map(),
+        roles: new Map(),
+        channels: new Map(),
+      };
+
+      addUserToCollection(allMentionedEntities, message.author, message.member);
+
       if (message.guild) {
-        logger.log(`Responding to message ${message.id}.`);
+        logger.log(
+          `Responding to message ${message.id} in guild ${message.guild.name}.`,
+        );
         buildServerContext(context, message);
         buildChannelContext(context, message);
       } else {
@@ -56,13 +63,16 @@ export default {
         );
       }
 
-      await buildReplyContext(context, message);
-      buildMentionsContext(context, message);
-
       const conversationHistory: Content[] = await buildConversationHistory(
         client,
         message,
+        allMentionedEntities,
+        "{% clear_history_before %}",
       );
+
+      await buildReferenceContext(context, message, allMentionedEntities);
+      buildMentionsContext(context, message, allMentionedEntities);
+      buildEntityLookupContext(context, allMentionedEntities);
 
       const imageParts: Part[] = await buildImageParts(message);
 
@@ -79,16 +89,6 @@ export default {
         role: "user",
         parts: currentMessageParts,
       });
-
-      // @@ REMOVE LATER
-      // Save context to file
-      if (!fs.existsSync(CONTEXT_DIR)) {
-        fs.mkdirSync(CONTEXT_DIR, { recursive: true });
-      }
-      const contextFilePath = path.join(CONTEXT_DIR, `${message.id}.json`);
-      fs.writeFileSync(contextFilePath, JSON.stringify(context, null, 2));
-      logger.log(`Context saved to ${contextFilePath}`);
-      // @@ END REMOVE LATER
 
       const guildId = message.guild?.id;
 
