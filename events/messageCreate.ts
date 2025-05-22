@@ -13,7 +13,7 @@ import {
   buildDMContext,
   buildEntityLookupContext,
   buildMentionsContext,
-  buildReplyContext,
+  buildReferenceContext,
   buildServerContext,
   type CollectedEntities,
 } from "../utils/ai/context/main";
@@ -76,7 +76,7 @@ export default {
         "{% clear_history_before %}",
       );
 
-      await buildReplyContext(context, message, allMentionedEntities);
+      await buildReferenceContext(context, message, allMentionedEntities);
       buildMentionsContext(context, message, allMentionedEntities);
       buildEntityLookupContext(context, allMentionedEntities);
 

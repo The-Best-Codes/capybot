@@ -64,7 +64,7 @@ export function addChannelToCollection(
     if ("name" in channel && typeof channel.name === "string") {
       entities.channels.set(channel.id, {
         id: channel.id,
-        name: channel.name,
+        name: channel?.name ?? "Unknown",
       });
     } else {
       const partialChannel = channel as { id: string; name: string };
@@ -91,7 +91,7 @@ export function buildEntityLookupContext(
   const entityDetails = context
     .add("entity-details")
     .desc(
-      "Lookup table for users, roles, and channels mentioned in the conversation (history + current message)",
+      "Lookup table for users, roles, and channels mentioned in the conversation",
     );
 
   if (entities.users.size > 0) {
@@ -136,15 +136,6 @@ export function buildMentionsContext(
   message: Message,
   entities: CollectedEntities,
 ) {
-  const botMentioned = message.mentions.users.has(
-    client.user?.id || "dummy_id_to_prevent_undefined_lookup",
-  );
-  if (botMentioned) {
-    context
-      .add("bot-mentioned", "true")
-      .desc("You (@Capybot) were mentioned in this message");
-  }
-
   const hasMentions =
     message.mentions.users.size > 0 ||
     message.mentions.roles.size > 0 ||
@@ -156,106 +147,53 @@ export function buildMentionsContext(
   const mentionsContext = context
     .add("mentions-in-current-message")
     .desc(
-      "Information about mentions found *only* in the current message content. Refer to 'entity-details' for full information about these IDs.",
+      "Mentions in the current message. Refer to 'entity-details' for full info.",
     );
 
-  const mentionedUserIds: string[] = [];
-  const mentionedChannelIds: string[] = [];
-  const mentionedRoleIds: string[] = [];
-  let everyoneMentioned = false;
-
-  const mentionedUserNames: string[] = [];
-  const mentionedChannelNames: string[] = [];
-  const mentionedRoleNames: string[] = [];
-
   if (message.mentions.users.size > 0) {
+    const userIdsNode = mentionsContext.add("user-ids");
     message.mentions.users.forEach((user) => {
       addUserToCollection(
         entities,
         user,
         message.guild?.members.cache.get(user.id),
       );
-      mentionedUserIds.push(user.id);
-
-      const userDetails = entities.users.get(user.id);
-      if (userDetails) {
-        mentionedUserNames.push(
-          `${userDetails.name}${userDetails.isSelf ? " (You)" : ""}`,
-        );
-      }
+      userIdsNode.add(user.id, "true");
     });
-    if (mentionedUserIds.length > 0) {
-      mentionsContext.add("user-ids", mentionedUserIds.join(", "));
-    }
   }
 
   if (message.mentions.channels.size > 0) {
+    const channelIdsNode = mentionsContext.add("channel-ids");
     message.mentions.channels.forEach((channel) => {
       addChannelToCollection(entities, channel);
-      mentionedChannelIds.push(channel.id);
-
-      const channelDetails = entities.channels.get(channel.id);
-      if (channelDetails) {
-        mentionedChannelNames.push(channelDetails.name);
-      }
+      channelIdsNode.add(channel.id, "true");
     });
-    if (mentionedChannelIds.length > 0) {
-      mentionsContext.add("channel-ids", mentionedChannelIds.join(", "));
-    }
   }
 
   if (message.mentions.roles.size > 0) {
+    const roleIdsNode = mentionsContext.add("role-ids");
     message.mentions.roles.forEach((role) => {
       addRoleToCollection(entities, role);
-      mentionedRoleIds.push(role.id);
-
-      const roleDetails = entities.roles.get(role.id);
-      if (roleDetails) {
-        mentionedRoleNames.push(roleDetails.name);
-      }
+      roleIdsNode.add(role.id, "true");
     });
-    if (mentionedRoleIds.length > 0) {
-      mentionsContext.add("role-ids", mentionedRoleIds.join(", "));
-    }
   }
 
   if (message.mentions.everyone) {
     mentionsContext
       .add("everyone", "true")
-      .desc("The @everyone or @here mention was used");
-    everyoneMentioned = true;
-  }
-
-  const summaryParts: string[] = [];
-  if (mentionedUserNames.length > 0) {
-    summaryParts.push(`Users: [${mentionedUserNames.join(", ")}]`);
-  }
-  if (mentionedChannelNames.length > 0) {
-    summaryParts.push(`Channels: [${mentionedChannelNames.join(", ")}]`);
-  }
-  if (mentionedRoleNames.length > 0) {
-    summaryParts.push(`Roles: [${mentionedRoleNames.join(", ")}]`);
-  }
-  if (everyoneMentioned) {
-    summaryParts.push(`Everyone: [True]`);
-  }
-
-  if (summaryParts.length > 0) {
-    mentionsContext
-      .add("summary", summaryParts.join("; "))
-      .desc("A concise summary of mentions in the current message");
+      .desc("@everyone or @here mention");
   }
 }
 
-export async function buildReplyContext(
+export async function buildReferenceContext(
   context: Context,
   message: Message,
   entities: CollectedEntities,
 ) {
   if (!message.reference?.messageId) return;
 
-  const replyAttributes = context
-    .add("reply-data")
+  const referenceAttributes = context
+    .add("reference-data")
     .desc("The sent message is a reply to another message");
 
   try {
@@ -281,23 +219,22 @@ export async function buildReplyContext(
       addChannelToCollection(entities, channel);
     });
 
-    replyAttributes.add("is-reply", "true");
-    replyAttributes.add("referenced-message-id", referencedMessage.id);
-    replyAttributes.add(
+    referenceAttributes.add("referenced-message-id", referencedMessage.id);
+    referenceAttributes.add(
       "referenced-message-author-id",
       referencedMessage.author.id,
     );
-    replyAttributes.add(
+    referenceAttributes.add(
       "referenced-message-content",
       referencedMessage.content,
     );
   } catch (error) {
-    replyAttributes.add(
+    referenceAttributes.add(
       "error",
       "Could not fetch referenced message or its details",
     );
-    logger.error(
-      `Error fetching referenced message ${message.reference?.messageId}: ${error}`,
+    logger.warn(
+      `Error fetching referenced message ${message.reference?.messageId} for context: ${error}`,
     );
   }
 }
@@ -305,7 +242,7 @@ export async function buildReplyContext(
 export function buildServerContext(context: Context, message: Message) {
   const serverAttributes = context
     .add("server-attributes")
-    .desc("Details about the server the message was sent in");
+    .desc("Details about the server");
   serverAttributes.add("id", message.guild?.id || "");
   serverAttributes.add("name", message.guild?.name || "");
   serverAttributes.add(
@@ -317,10 +254,10 @@ export function buildServerContext(context: Context, message: Message) {
 export function buildChannelContext(context: Context, message: Message) {
   const channelAttributes = context
     .add("channel-attributes")
-    .desc("Details about the channel the message was sent in");
+    .desc("Details about the channel");
   channelAttributes.add("id", message.channel.id);
   // @ts-ignore
-  channelAttributes.add("name", message.channel?.name || "Unknown");
+  channelAttributes.add("name", (message.channel as any)?.name || "Unknown");
 }
 
 export function buildDMContext(context: Context, message: Message) {
