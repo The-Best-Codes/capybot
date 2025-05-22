@@ -102,9 +102,11 @@ export function buildEntityLookupContext(
       const userNode = usersNode.add(id);
       userNode.add("id", details.id);
       userNode.add("name", details.name);
-      if (details.isBot) userNode.add("is-bot", "true");
-      if (details.isSelf)
+      if (details.isSelf) {
         userNode.add("is-self", "true").desc("You (@Capybot)");
+      } else if (details.isBot) {
+        userNode.add("is-bot", "true");
+      }
     }
   }
 
@@ -179,9 +181,7 @@ export function buildMentionsContext(
   }
 
   if (message.mentions.everyone) {
-    mentionsContext
-      .add("everyone", "true")
-      .desc("@everyone or @here mention");
+    mentionsContext.add("everyone", "true").desc("@everyone or @here mention");
   }
 }
 
