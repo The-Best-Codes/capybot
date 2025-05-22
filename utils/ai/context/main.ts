@@ -4,7 +4,7 @@ import { Context } from "../../contextBuilder";
 export function buildServerContext(context: Context, message: Message) {
   const serverAttributes = context
     .add("server-attributes")
-    .desc("Details about the server you are currently in");
+    .desc("Details about the server the message was sent in");
   serverAttributes.add("id", message.guild?.id || "");
   serverAttributes.add("name", message.guild?.name || "");
   serverAttributes.add(
@@ -16,10 +16,10 @@ export function buildServerContext(context: Context, message: Message) {
 export function buildChannelContext(context: Context, message: Message) {
   const channelAttributes = context
     .add("channel-attributes")
-    .desc("Details about the channel you are currently in");
+    .desc("Details about the channel the message was sent in");
   channelAttributes.add("id", message.channel.id);
   // @ts-ignore
-  channelAttributes.add("name", message.channel?.name || "Direct Message");
+  channelAttributes.add("name", message.channel?.name || "Unknown");
   channelAttributes.add("type", message.channel.type.toString());
 }
 
@@ -29,33 +29,25 @@ export function buildDMContext(context: Context, message: Message) {
     .desc("Details about the direct message channel");
   channelAttributes.add("id", message.channel.id);
   channelAttributes.add("name", "Direct Message");
-  channelAttributes.add("type", "DM");
+  channelAttributes.add("type", "Direct Message");
 }
 
 export function buildUserContext(context: Context, message: Message) {
   const userAttributes = context
     .add("user-attributes")
-    .desc(
-      "These are details about the user who just sent you a message, triggering a response",
-    );
+    .desc("Details about the user who sent the message");
   userAttributes.add("id", message.author.id);
-  userAttributes.add("username", message.author.username);
-  userAttributes
-    .add("display-name", message.author.displayName)
-    .desc("The user's prefered name on Discord");
   if (message.member?.nickname) {
-    userAttributes
-      .add("server-nickname", message.member?.nickname)
-      .desc("The user's prefered name in this server");
+    userAttributes.add("server-nickname", message.member?.nickname);
+  } else {
+    userAttributes.add("display-name", message.author.displayName);
   }
 }
 
 export async function buildReplyContext(context: Context, message: Message) {
   if (!message.reference) return;
 
-  context
-    .add("is-reply", "true")
-    .desc("This message is a reply to another message");
+  context.add("is-reply", "true");
   const replyAttributes = context
     .add("replying-to")
     .desc("Information about the message being replied to");
@@ -67,16 +59,12 @@ export async function buildReplyContext(context: Context, message: Message) {
 
     const userAttrs = replyAttributes
       .add("user-attributes")
-      .desc("Details about the user who wrote the message being replied to");
+      .desc("Details about the user who sent the message (being replied to)");
     userAttrs.add("id", referencedMessage.author.id);
-    userAttrs.add("username", referencedMessage.author.username);
-    userAttrs
-      .add("display-name", referencedMessage.author.displayName)
-      .desc("The user's prefered name on Discord");
     if (referencedMessage.member?.nickname) {
-      userAttrs
-        .add("server-nickname", referencedMessage.member?.nickname)
-        .desc("The user's prefered name in this server");
+      userAttrs.add("server-nickname", referencedMessage.member?.nickname);
+    } else {
+      userAttrs.add("display-name", referencedMessage.author.displayName);
     }
     if (referencedMessage.author.bot) {
       userAttrs.add("is-bot", "true");
@@ -87,7 +75,12 @@ export async function buildReplyContext(context: Context, message: Message) {
 }
 
 export function buildMentionsContext(context: Context, message: Message) {
-  // TODO: Don't add mentions if there are none
+  const hasMentions =
+    message.mentions.users.size > 0 ||
+    message.mentions.roles.size > 0 ||
+    message.mentions.channels.size > 0;
+  if (!hasMentions) return;
+
   const mentionsContext = context
     .add("mentions")
     .desc("Information about mentions found in the message content");
@@ -101,17 +94,15 @@ export function buildMentionsContext(context: Context, message: Message) {
         .add(`user-${user.id}`)
         .desc(`Details for user mention with ID ${user.id}`);
       userMention.add("id", user.id);
-      userMention.add("username", user.username);
-      userMention
-        .add("display-name", user.displayName)
-        .desc("The user's prefered name on Discord");
       const member = message.guild?.members.cache.get(user.id);
       if (member?.nickname) {
-        userMention
-          .add("server-nickname", member.nickname)
-          .desc("The user's prefered name in this server");
+        userMention.add("server-nickname", member.nickname);
+      } else {
+        userMention.add("display-name", user.displayName);
       }
-      userMention.add("is-bot", user.bot ? "true" : "false");
+      if (user.bot) {
+        userMention.add("is-bot", "true");
+      }
     });
   }
 
@@ -141,8 +132,6 @@ export function buildMentionsContext(context: Context, message: Message) {
         .desc(`Details for role mention with ID ${role.id}`);
       roleMention.add("id", role.id);
       roleMention.add("name", role.name);
-      roleMention.add("color", role.color.toString());
-      roleMention.add("type", "role");
     });
   }
 

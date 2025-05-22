@@ -19,6 +19,12 @@ import { buildImageParts } from "../utils/ai/imageParts";
 import { Context } from "../utils/contextBuilder";
 import { logger } from "../utils/logger";
 import { escapeMentions } from "../utils/escapeMentions";
+// @@ REMOVE LATER
+import * as fs from "node:fs";
+import * as path from "node:path";
+
+const CONTEXT_DIR = path.join(__dirname, "../data/context");
+// @@ END REMOVE LATER
 
 export default {
   event: Events.MessageCreate,
@@ -73,6 +79,16 @@ export default {
         role: "user",
         parts: currentMessageParts,
       });
+
+      // @@ REMOVE LATER
+      // Save context to file
+      if (!fs.existsSync(CONTEXT_DIR)) {
+        fs.mkdirSync(CONTEXT_DIR, { recursive: true });
+      }
+      const contextFilePath = path.join(CONTEXT_DIR, `${message.id}.json`);
+      fs.writeFileSync(contextFilePath, JSON.stringify(context, null, 2));
+      logger.log(`Context saved to ${contextFilePath}`);
+      // @@ END REMOVE LATER
 
       const guildId = message.guild?.id;
 
