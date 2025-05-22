@@ -1,4 +1,5 @@
 import { Message } from "discord.js";
+import client from "../../../clients/discord";
 import { Context } from "../../contextBuilder";
 
 export function buildServerContext(context: Context, message: Message) {
@@ -41,24 +42,28 @@ export function buildUserContext(context: Context, message: Message) {
   } else {
     userAttributes.add("display-name", message.author.displayName);
   }
+
+  if (message.author.id === client.user?.id) {
+    userAttributes.add("is-self", "true").desc("The user is you!");
+  }
 }
 
 export async function buildReplyContext(context: Context, message: Message) {
   if (!message.reference) return;
 
-  context.add("is-reply", "true");
   const replyAttributes = context
-    .add("replying-to")
-    .desc("Information about the message being replied to");
+    .add("reply-data")
+    .desc("The sent message is a reply to another message");
 
   try {
     const referencedMessage = await message.fetchReference();
-    replyAttributes.add("message-id", referencedMessage.id);
-    replyAttributes.add("content", referencedMessage.content);
+    const replyMessageAttributes = replyAttributes
+      .add("message-attributes")
+      .desc("Details about the referenced message");
+    replyMessageAttributes.add("id", referencedMessage.id);
+    replyMessageAttributes.add("content", referencedMessage.content);
 
-    const userAttrs = replyAttributes
-      .add("user-attributes")
-      .desc("Details about the user who sent the message");
+    const userAttrs = replyMessageAttributes.add("user-attributes");
     userAttrs.add("id", referencedMessage.author.id);
     if (referencedMessage.member?.nickname) {
       userAttrs.add("server-nickname", referencedMessage.member?.nickname);
@@ -67,6 +72,9 @@ export async function buildReplyContext(context: Context, message: Message) {
     }
     if (referencedMessage.author.bot) {
       userAttrs.add("is-bot", "true");
+    }
+    if (referencedMessage.author.id === client.user?.id) {
+      userAttrs.add("is-self", "true").desc("The user is you!");
     }
   } catch (error) {
     replyAttributes.add("error", "Could not fetch referenced message");
@@ -101,6 +109,9 @@ export function buildMentionsContext(context: Context, message: Message) {
       }
       if (user.bot) {
         userMention.add("is-bot", "true");
+      }
+      if (user.id === client.user?.id) {
+        userMention.add("is-self", "true").desc("The user is you!");
       }
     });
   }
