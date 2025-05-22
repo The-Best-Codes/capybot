@@ -22,12 +22,6 @@ import { buildImageParts } from "../utils/ai/imageParts";
 import { Context } from "../utils/contextBuilder";
 import { escapeMentions } from "../utils/escapeMentions";
 import { logger } from "../utils/logger";
-// @@ REMOVE LATER
-import * as fs from "node:fs";
-import * as path from "node:path";
-
-const CONTEXT_DIR = path.join(__dirname, "../data/context");
-// @@ END REMOVE LATER
 
 export default {
   event: Events.MessageCreate,
@@ -95,23 +89,6 @@ export default {
         role: "user",
         parts: currentMessageParts,
       });
-
-      // @@ REMOVE LATER - Save context to file
-      if (!fs.existsSync(CONTEXT_DIR)) {
-        fs.mkdirSync(CONTEXT_DIR, { recursive: true });
-      }
-      const contextFilePath = path.join(CONTEXT_DIR, `${message.id}.html`);
-      fs.writeFileSync(contextFilePath, context.toString());
-      const messageHistoryFilePath = path.join(
-        CONTEXT_DIR,
-        `${message.id}.json`,
-      );
-      fs.writeFileSync(
-        messageHistoryFilePath,
-        JSON.stringify(conversationHistory),
-      );
-      logger.log(`Context saved to ${contextFilePath}`);
-      // @@ END REMOVE LATER
 
       const guildId = message.guild?.id;
 
