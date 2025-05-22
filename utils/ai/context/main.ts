@@ -38,13 +38,20 @@ export function buildUserContext(context: Context, message: Message) {
     .desc("Details about the user who sent the message");
   userAttributes.add("id", message.author.id);
   if (message.member?.nickname) {
-    userAttributes.add("server-nickname", message.member?.nickname);
+    userAttributes
+      .add("name", message.member?.nickname)
+      .desc("Server nickname (preferred)");
   } else {
-    userAttributes.add("display-name", message.author.displayName);
+    userAttributes
+      .add("name", message.author.displayName)
+      .desc("Discord display name (preferred)");
   }
 
   if (message.author.id === client.user?.id) {
-    userAttributes.add("is-self", "true").desc("The user is you!");
+    userAttributes.add("is-self", "true").desc("You (@Capybot)");
+  }
+  if (message.author.bot) {
+    userAttributes.add("is-bot", "true");
   }
 }
 
@@ -66,15 +73,19 @@ export async function buildReplyContext(context: Context, message: Message) {
     const userAttrs = replyMessageAttributes.add("user-attributes");
     userAttrs.add("id", referencedMessage.author.id);
     if (referencedMessage.member?.nickname) {
-      userAttrs.add("server-nickname", referencedMessage.member?.nickname);
+      userAttrs
+        .add("name", referencedMessage.member?.nickname)
+        .desc("Server nickname (preferred)");
     } else {
-      userAttrs.add("display-name", referencedMessage.author.displayName);
+      userAttrs
+        .add("name", referencedMessage.author.displayName)
+        .desc("Discord display name (preferred)");
+    }
+    if (referencedMessage.author.id === client.user?.id) {
+      userAttrs.add("is-self", "true").desc("You (@Capybot)");
     }
     if (referencedMessage.author.bot) {
       userAttrs.add("is-bot", "true");
-    }
-    if (referencedMessage.author.id === client.user?.id) {
-      userAttrs.add("is-self", "true").desc("The user is you!");
     }
   } catch (error) {
     replyAttributes.add("error", "Could not fetch referenced message");
@@ -82,15 +93,31 @@ export async function buildReplyContext(context: Context, message: Message) {
 }
 
 export function buildMentionsContext(context: Context, message: Message) {
+  const botMentioned = message.mentions.users.has(
+    client.user?.id || "dummy_id_to_prevent_undefined_lookup",
+  );
+  if (botMentioned) {
+    context
+      .add("bot-mentioned", "true")
+      .desc("You (@Capybot) were mentioned in this message");
+  }
+
   const hasMentions =
     message.mentions.users.size > 0 ||
     message.mentions.roles.size > 0 ||
-    message.mentions.channels.size > 0;
+    message.mentions.channels.size > 0 ||
+    message.mentions.everyone;
+
   if (!hasMentions) return;
 
   const mentionsContext = context
     .add("mentions")
     .desc("Information about mentions found in the message content");
+
+  const mentionedUserNames: string[] = [];
+  const mentionedChannelNames: string[] = [];
+  const mentionedRoleNames: string[] = [];
+  let everyoneMentioned = false;
 
   if (message.mentions.users.size > 0) {
     const userMentions = mentionsContext
@@ -102,16 +129,21 @@ export function buildMentionsContext(context: Context, message: Message) {
         .desc(`Details for user mention with ID ${user.id}`);
       userMention.add("id", user.id);
       const member = message.guild?.members.cache.get(user.id);
-      if (member?.nickname) {
-        userMention.add("server-nickname", member.nickname);
-      } else {
-        userMention.add("display-name", user.displayName);
-      }
+      const name = member?.nickname || user.displayName;
+      const nameDesc = member?.nickname
+        ? "Server nickname (preferred)"
+        : "Discord display name (preferred)";
+      userMention.add("name", name).desc(nameDesc);
+
+      mentionedUserNames.push(
+        `${name}${user.id === client.user?.id ? " (You)" : ""}`,
+      );
+
       if (user.bot) {
         userMention.add("is-bot", "true");
       }
       if (user.id === client.user?.id) {
-        userMention.add("is-self", "true").desc("The user is you!");
+        userMention.add("is-self", "true").desc("You (@Capybot)");
       }
     });
   }
@@ -127,6 +159,7 @@ export function buildMentionsContext(context: Context, message: Message) {
       channelMention.add("id", channel.id);
       if ("name" in channel && typeof channel.name === "string") {
         channelMention.add("name", channel.name);
+        mentionedChannelNames.push(channel.name);
       }
     });
   }
@@ -141,6 +174,7 @@ export function buildMentionsContext(context: Context, message: Message) {
         .desc(`Details for role mention with ID ${role.id}`);
       roleMention.add("id", role.id);
       roleMention.add("name", role.name);
+      mentionedRoleNames.push(role.name);
     });
   }
 
@@ -148,5 +182,26 @@ export function buildMentionsContext(context: Context, message: Message) {
     mentionsContext
       .add("everyone", "true")
       .desc("The @everyone or @here mention was used");
+    everyoneMentioned = true;
+  }
+
+  const summaryParts: string[] = [];
+  if (mentionedUserNames.length > 0) {
+    summaryParts.push(`Users: [${mentionedUserNames.join(", ")}]`);
+  }
+  if (mentionedChannelNames.length > 0) {
+    summaryParts.push(`Channels: [${mentionedChannelNames.join(", ")}]`);
+  }
+  if (mentionedRoleNames.length > 0) {
+    summaryParts.push(`Roles: [${mentionedRoleNames.join(", ")}]`);
+  }
+  if (everyoneMentioned) {
+    summaryParts.push(`Everyone: [True]`);
+  }
+
+  if (summaryParts.length > 0) {
+    mentionsContext
+      .add("summary", summaryParts.join("; "))
+      .desc("A concise summary of mentions");
   }
 }
