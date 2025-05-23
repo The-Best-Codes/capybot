@@ -83,6 +83,7 @@ export default {
         "name",
         message.member?.nickname || message.author.displayName,
       );
+      context.add("current-message-id", message.id);
 
       const currentMessageParts = [
         {
