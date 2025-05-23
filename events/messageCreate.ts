@@ -75,7 +75,14 @@ export default {
       buildAttachmentContext(context, message);
       buildEntityLookupContext(context, allMentionedEntities);
 
+      // Manually add additional context
       context.add("message-timestamp", message.createdAt.toISOString());
+      const currentMessageAuthor = context.add("current-message-author");
+      currentMessageAuthor.add("id", message.author.id);
+      currentMessageAuthor.add(
+        "name",
+        message.member?.nickname || message.author.displayName,
+      );
 
       const currentMessageParts = [
         {

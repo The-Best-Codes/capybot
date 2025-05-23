@@ -103,7 +103,7 @@ export function buildEntityLookupContext(
       userNode.add("id", details.id);
       userNode.add("name", details.name);
       if (details.isSelf) {
-        userNode.add("is-self", "true").desc("You (@Capybot)");
+        userNode.add("is-self", "true").desc("You");
       } else if (details.isBot) {
         userNode.add("is-bot", "true");
       }
