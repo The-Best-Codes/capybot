@@ -38,7 +38,7 @@ export default {
         config: {
           responseMimeType: "application/json",
           responseSchema: responseSchema,
-          temperature: 1,
+          temperature: 2,
         },
       });
 

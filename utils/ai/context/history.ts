@@ -5,6 +5,7 @@ import {
   addChannelToCollection,
   addRoleToCollection,
   addUserToCollection,
+  buildAttachmentContext,
   type CollectedEntities,
 } from "./main";
 
@@ -107,6 +108,11 @@ export async function buildConversationHistory(
             );
           }
         }
+        buildAttachmentContext(
+          historyContext,
+          msg,
+          "Details about attachments in the historical message",
+        );
 
         conversationHistory.push({
           role: "user",
