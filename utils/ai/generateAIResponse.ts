@@ -1,9 +1,8 @@
 import type { Content } from "@google/genai";
-import { DynamicRetrievalConfigMode } from "@google/genai";
 import { genAI } from "../../clients/googleAi";
+import { logger } from "../logger";
 import { systemInstruction } from "./systemInstruction";
 import { tools } from "./tools";
-import { logger } from "../logger";
 
 const MAX_TOOL_CALL_STEPS = 5;
 

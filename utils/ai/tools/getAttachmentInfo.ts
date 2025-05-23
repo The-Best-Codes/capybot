@@ -1,0 +1,111 @@
+import { Type } from "@google/genai";
+import { type GenerateContentParameters, type Part } from "@google/genai";
+import { genAI } from "../../../clients/googleAi";
+import type { ToolDefinition } from "./types";
+
+async function getAttachmentInfoFn({
+  prompt,
+  url,
+  contentType,
+}: {
+  prompt: string;
+  url: string;
+  contentType?: string;
+}): Promise<{
+  success: boolean;
+  analysis?: string;
+  message?: string;
+  error?: any;
+}> {
+  try {
+    async function urlToGeminiPart(
+      url: string,
+      mimeType?: string,
+    ): Promise<Part> {
+      try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch attachment from URL: ${url}. Status: ${response.status} ${response.statusText}`,
+          );
+        }
+
+        const buffer = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(buffer);
+
+        const inferredMimeType =
+          mimeType ||
+          response.headers.get("content-type") ||
+          "application/octet-stream";
+
+        return {
+          inlineData: {
+            data: Buffer.from(uint8Array).toString("base64"),
+            mimeType: inferredMimeType,
+          },
+        };
+      } catch (error: any) {
+        throw new Error(
+          `Error fetching or processing attachment from URL: ${url}. ${error.message}`,
+        );
+      }
+    }
+
+    const imagePart = await urlToGeminiPart(url, contentType);
+
+    const request: GenerateContentParameters = {
+      model: "gemini-2.0-flash",
+      contents: [{ parts: [{ text: prompt }, imagePart] }],
+    };
+
+    const result = await genAI.models.generateContent(request);
+    const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!responseText) {
+      return {
+        success: false,
+        message: "No response from the AI model.",
+      };
+    }
+
+    return {
+      success: true,
+      analysis: responseText,
+    };
+  } catch (error: any) {
+    console.error("Attachment analysis failed:", error);
+    return {
+      success: false,
+      message: "Failed to analyze attachment",
+      error,
+    };
+  }
+}
+
+export const getAttachmentInfo: ToolDefinition = {
+  name: "getAttachmentInfo",
+  description:
+    "Retrieves information about an attachment (image, video, audio, or text) from a given URL. It analyzes the attachment based on a provided prompt and returns a summary.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      prompt: {
+        type: Type.STRING,
+        description:
+          "A detailed prompt describing what information to extract from the attachment. Be specific about the type of analysis required (e.g., in-depth analysis, general outline, key points). This should be provided by you, the model, and not the user unless they specifically request it.",
+      },
+      url: {
+        type: Type.STRING,
+        description: "The URL of the attachment to analyze.",
+      },
+      contentType: {
+        type: Type.STRING,
+        description:
+          "The content type of the attachment (e.g., image/png, text/plain)",
+      },
+    },
+    required: ["prompt", "url"],
+  },
+  function: getAttachmentInfoFn,
+};
