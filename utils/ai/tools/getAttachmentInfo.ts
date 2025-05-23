@@ -18,59 +18,56 @@ async function getAttachmentInfoFn({
   error?: any;
 }> {
   try {
-async function urlToGeminiPart(
-  url: string,
-  mimeType?: string,
-): Promise<Part> {
-  try {
-    // Validate URL format
-    const urlObj = new URL(url);
-    if (!['http:', 'https:'].includes(urlObj.protocol)) {
-      throw new Error('Only HTTP and HTTPS URLs are allowed');
+    async function urlToGeminiPart(
+      url: string,
+      mimeType?: string,
+    ): Promise<Part> {
+      try {
+        const urlObj = new URL(url);
+        if (!["http:", "https:"].includes(urlObj.protocol)) {
+          throw new Error("Only HTTP and HTTPS URLs are allowed");
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: { "User-Agent": "CapyBot/1.0" },
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch attachment from URL: ${url}. Status: ${response.status} ${response.statusText}`,
+          );
+        }
+
+        const contentLength = response.headers.get("content-length");
+        if (contentLength && parseInt(contentLength, 10) > 20 * 1024 * 1024) {
+          throw new Error("Attachment too large (max 20MB)");
+        }
+
+        const buffer = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(buffer);
+
+        const inferredMimeType =
+          mimeType ||
+          response.headers.get("content-type") ||
+          "application/octet-stream";
+
+        return {
+          inlineData: {
+            data: Buffer.from(uint8Array).toString("base64"),
+            mimeType: inferredMimeType,
+          },
+        };
+      } catch (error: any) {
+        throw new Error(
+          `Error fetching or processing attachment from URL: ${url}. ${error.message}`,
+        );
+      }
     }
-
-    // Add timeout and signal
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
-
-    const response = await fetch(url, { 
-      signal: controller.signal,
-      headers: { 'User-Agent': 'CapyBot/1.0' }
-    });
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch attachment from URL: ${url}. Status: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    // Check content length
-    const contentLength = response.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > 50 * 1024 * 1024) { // 50MB limit
-      throw new Error('Attachment too large (max 50MB)');
-    }
-
-    const buffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(buffer);
-
-    const inferredMimeType =
-      mimeType ||
-      response.headers.get("content-type") ||
-      "application/octet-stream";
-
-    return {
-      inlineData: {
-        data: Buffer.from(uint8Array).toString("base64"),
-        mimeType: inferredMimeType,
-      },
-    };
-  } catch (error: any) {
-    throw new Error(
-      `Error fetching or processing attachment from URL: ${url}. ${error.message}`,
-    );
-  }
-}
 
     const attachmentPart = await urlToGeminiPart(url, contentType);
 
