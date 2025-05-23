@@ -1,4 +1,4 @@
-import type { Content, Part } from "@google/genai";
+import type { Content } from "@google/genai";
 import {
   ChannelType,
   Client,
@@ -18,7 +18,6 @@ import {
   type CollectedEntities,
 } from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
-import { buildImageParts } from "../utils/ai/imageParts";
 import { Context } from "../utils/contextBuilder";
 import { escapeMentions } from "../utils/escapeMentions";
 import { logger } from "../utils/logger";
@@ -74,15 +73,12 @@ export default {
       buildMentionsContext(context, message, allMentionedEntities);
       buildEntityLookupContext(context, allMentionedEntities);
 
-      const imageParts: Part[] = await buildImageParts(message);
-
       context.add("message-timestamp", message.createdAt.toISOString());
 
       const currentMessageParts = [
         {
           text: `${context.toString()}\n\n${message?.content || "Error: No message content"}`,
         },
-        ...imageParts,
       ];
 
       conversationHistory.push({
