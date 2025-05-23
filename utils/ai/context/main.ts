@@ -228,6 +228,12 @@ export async function buildReferenceContext(
       "referenced-message-content",
       referencedMessage.content,
     );
+
+    buildAttachmentContext(
+      referenceAttributes,
+      referencedMessage,
+      "Details about attachments in the referenced message",
+    );
   } catch (error) {
     referenceAttributes.add(
       "error",
