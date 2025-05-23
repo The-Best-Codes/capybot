@@ -1,5 +1,6 @@
 import { Type, type GenerateContentParameters, type Part } from "@google/genai";
 import { genAI } from "../../../clients/googleAi";
+import { logger } from "../../logger";
 import type { ToolDefinition } from "./types";
 
 async function getAttachmentInfoFn({
@@ -73,7 +74,7 @@ async function getAttachmentInfoFn({
       analysis: responseText,
     };
   } catch (error: any) {
-    console.error("Attachment analysis failed:", error);
+    logger.error("Attachment analysis failed:", error);
     return {
       success: false,
       message: "Failed to analyze attachment",
