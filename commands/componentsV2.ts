@@ -21,7 +21,7 @@ export default {
 
     const components = [
       new TextDisplayBuilder().setContent(
-        "Sure! Hang tight while I take a closer look at the image…",
+        "[Example purposes only]\nSure! Hang tight while I take a closer look at the image…",
       ),
       new ContainerBuilder()
         .addTextDisplayComponents(
