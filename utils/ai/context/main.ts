@@ -269,14 +269,23 @@ export function buildDMContext(context: Context, message: Message) {
   channelAttributes.add("is-dm", "true");
 }
 
-export function buildAttachmentContext(context: Context, message: Message) {
+export function buildAttachmentContext(
+  context: Context,
+  message: Message,
+  desc?: string,
+) {
   if (message.attachments.size === 0) {
     return;
   }
 
-  const attachmentsContext = context
-    .add("attachments")
-    .desc("Details about attachments in the current message.");
+  let attachmentDesc = "Details about the attachments in this message";
+  if (desc !== undefined && desc.trim().length > 0) {
+    attachmentDesc = desc;
+  } else if (desc === undefined) {
+    attachmentDesc = "Details about attachments in the current message";
+  }
+
+  const attachmentsContext = context.add("attachments").desc(attachmentDesc);
 
   message.attachments.forEach((attachment) => {
     const attachmentNode = attachmentsContext.add(attachment.id);
