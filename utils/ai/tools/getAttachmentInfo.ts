@@ -1,5 +1,4 @@
-import { Type } from "@google/genai";
-import { type GenerateContentParameters, type Part } from "@google/genai";
+import { Type, type GenerateContentParameters, type Part } from "@google/genai";
 import { genAI } from "../../../clients/googleAi";
 import type { ToolDefinition } from "./types";
 
@@ -55,7 +54,7 @@ async function getAttachmentInfoFn({
     const attachmentPart = await urlToGeminiPart(url, contentType);
 
     const request: GenerateContentParameters = {
-      model: "gemini-2.0-flash",
+      model: process.env.GEMINI_ATTACHMENT_MODEL || "gemini-2.0-flash",
       contents: [{ parts: [{ text: prompt }, attachmentPart] }],
     };
 
