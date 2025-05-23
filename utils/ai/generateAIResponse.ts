@@ -4,7 +4,7 @@ import { logger } from "../logger";
 import { systemInstruction } from "./systemInstruction";
 import { tools } from "./tools";
 
-const MAX_TOOL_CALL_STEPS = 5;
+const MAX_TOOL_CALL_STEPS = 10;
 
 async function executeTool(
   toolName: string | undefined,

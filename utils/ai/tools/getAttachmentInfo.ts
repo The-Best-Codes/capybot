@@ -52,11 +52,11 @@ async function getAttachmentInfoFn({
       }
     }
 
-    const imagePart = await urlToGeminiPart(url, contentType);
+    const attachmentPart = await urlToGeminiPart(url, contentType);
 
     const request: GenerateContentParameters = {
       model: "gemini-2.0-flash",
-      contents: [{ parts: [{ text: prompt }, imagePart] }],
+      contents: [{ parts: [{ text: prompt }, attachmentPart] }],
     };
 
     const result = await genAI.models.generateContent(request);
@@ -102,7 +102,7 @@ export const getAttachmentInfo: ToolDefinition = {
       contentType: {
         type: Type.STRING,
         description:
-          "The content type of the attachment (e.g., image/png, text/plain)",
+          "The content type of the attachment (e.g., image/png, text/plain, video/mp4, audio/mp3, application/pdf). If not provided, the tool will attempt to infer it.",
       },
     },
     required: ["prompt", "url"],
