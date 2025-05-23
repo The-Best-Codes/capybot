@@ -1,4 +1,4 @@
-import type { Content } from "@google/genai";
+import { type Content } from "@google/genai";
 import { genAI } from "../../clients/googleAi";
 import { logger } from "../logger";
 import { systemInstruction } from "./systemInstruction";
