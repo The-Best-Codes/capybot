@@ -90,7 +90,6 @@ export const searchServerMembers: ToolDefinition = {
         return { success: false, message: "No members found in this guild" };
       }
 
-      let matchingMembers = members;
       let membersArray = [...members.values()];
 
       if (args.query) {
