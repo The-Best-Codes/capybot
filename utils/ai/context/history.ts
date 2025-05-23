@@ -107,6 +107,7 @@ export async function buildConversationHistory(
             );
           }
         }
+        buildAttachmentContext(historyContext, msg);
 
         conversationHistory.push({
           role: "user",
@@ -121,4 +122,24 @@ export async function buildConversationHistory(
   }
 
   return conversationHistory;
+}
+
+function buildAttachmentContext(context: Context, message: Message) {
+  if (message.attachments.size === 0) {
+    return;
+  }
+
+  const attachmentsContext = context
+    .add("attachments")
+    .desc("Details about attachments in the historical message.");
+
+  message.attachments.forEach((attachment) => {
+    const attachmentNode = attachmentsContext.add(attachment.id);
+    attachmentNode.add("name", attachment.name);
+    attachmentNode.add("url", attachment.url);
+    attachmentNode.add("content_type", attachment.contentType || "Unknown");
+    attachmentNode
+      .add("size", attachment.size.toString())
+      .desc("Size in bytes");
+  });
 }

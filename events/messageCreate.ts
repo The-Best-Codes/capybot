@@ -15,6 +15,7 @@ import {
   buildMentionsContext,
   buildReferenceContext,
   buildServerContext,
+  buildAttachmentContext,
   type CollectedEntities,
 } from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
@@ -71,6 +72,7 @@ export default {
 
       await buildReferenceContext(context, message, allMentionedEntities);
       buildMentionsContext(context, message, allMentionedEntities);
+      buildAttachmentContext(context, message);
       buildEntityLookupContext(context, allMentionedEntities);
 
       context.add("message-timestamp", message.createdAt.toISOString());

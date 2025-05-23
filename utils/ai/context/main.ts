@@ -268,3 +268,23 @@ export function buildDMContext(context: Context, message: Message) {
   channelAttributes.add("name", "Direct Message");
   channelAttributes.add("is-dm", "true");
 }
+
+export function buildAttachmentContext(context: Context, message: Message) {
+  if (message.attachments.size === 0) {
+    return;
+  }
+
+  const attachmentsContext = context
+    .add("attachments")
+    .desc("Details about attachments in the current message.");
+
+  message.attachments.forEach((attachment) => {
+    const attachmentNode = attachmentsContext.add(attachment.id);
+    attachmentNode.add("name", attachment.name);
+    attachmentNode.add("url", attachment.url);
+    attachmentNode.add("content_type", attachment.contentType || "Unknown");
+    attachmentNode
+      .add("size", attachment.size.toString())
+      .desc("Size in bytes");
+  });
+}
