@@ -7,6 +7,7 @@ import {
   addUserToCollection,
   buildAttachmentContext,
   type CollectedEntities,
+  buildStickerContext,
 } from "./main";
 
 export async function buildConversationHistory(
@@ -113,12 +114,22 @@ export async function buildConversationHistory(
           msg,
           "Details about attachments in the historical message",
         );
+        buildStickerContext(historyContext, msg);
+
+        let messageContent = msg.content;
+        if (!messageContent) {
+          historyContext
+            .add("no-content", "true")
+            .desc(
+              "The message contains no text content, so focus on attachments and stickers if present.",
+            );
+        }
 
         conversationHistory.push({
           role: "user",
           parts: [
             {
-              text: `${historyContext.toString()}\n\n${msg?.content || "Error: No message content"}`,
+              text: `${historyContext.toString()}\n\n${messageContent}`,
             },
           ],
         });
