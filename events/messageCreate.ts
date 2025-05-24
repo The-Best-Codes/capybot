@@ -17,6 +17,7 @@ import {
   buildServerContext,
   buildAttachmentContext,
   type CollectedEntities,
+  buildStickerContext,
 } from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { Context } from "../utils/contextBuilder";
@@ -73,6 +74,7 @@ export default {
       await buildReferenceContext(context, message, allMentionedEntities);
       buildMentionsContext(context, message, allMentionedEntities);
       buildAttachmentContext(context, message);
+      buildStickerContext(context, message);
       buildEntityLookupContext(context, allMentionedEntities);
 
       // Manually add additional context
@@ -87,7 +89,7 @@ export default {
 
       const currentMessageParts = [
         {
-          text: `${context.toString()}\n\n${message?.content || "Error: No message content"}`,
+          text: `${context.toString()}\n\n${message?.content}`,
         },
       ];
 
