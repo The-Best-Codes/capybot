@@ -1,5 +1,4 @@
 import {
-  ApplicationFlags,
   ChatInputCommandInteraction,
   ContainerBuilder,
   MessageFlags,
