@@ -56,7 +56,7 @@ export async function buildConversationHistory(
       if (msg.author.id === client.user?.id) {
         conversationHistory.push({
           role: "model",
-          parts: [{ text: msg?.content || "Error: No message content" }],
+          parts: [{ text: msg?.content || "No text content in message" }],
         });
       } else {
         historyContext.add("user-id", msg.author.id);
