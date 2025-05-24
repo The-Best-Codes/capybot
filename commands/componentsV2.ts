@@ -1,6 +1,5 @@
 import {
   ChatInputCommandInteraction,
-  Colors,
   ContainerBuilder,
   MessageFlags,
   SeparatorBuilder,
