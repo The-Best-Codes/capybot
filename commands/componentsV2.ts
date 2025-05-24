@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  Colors,
   ContainerBuilder,
   MessageFlags,
   SeparatorBuilder,
@@ -24,7 +25,7 @@ export default {
       ),
       new ContainerBuilder()
         .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent("Used tool `get_image_base64`."),
+          new TextDisplayBuilder().setContent("Used tool `get_image_url`."),
         )
         .addSeparatorComponents(
           new SeparatorBuilder()
@@ -32,8 +33,14 @@ export default {
             .setDivider(true),
         )
         .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent("Used tool `describe_image`."),
+          new TextDisplayBuilder().setContent("Used tool `get_url_base64`."),
         ),
+      new TextDisplayBuilder().setContent(
+        "Okay, now that I have the image Base64 data, let me use the `describe_image` tool with it.",
+      ),
+      new ContainerBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent("Used tool `describe_image`."),
+      ),
       new TextDisplayBuilder().setContent(
         "It looks like the image is a logo for bestcodes.dev. It features a gradient background and the text “bestcodes.dev” in white in the center of the image. Is there anything else I can assist you with?",
       ),
