@@ -103,14 +103,14 @@ async function getAttachmentInfoFn({
 export const getAttachmentInfo: ToolDefinition = {
   name: "get_attachment_info",
   description:
-    "Retrieves information about an attachment (image, video, audio, or text) from a given URL. It analyzes the attachment based on a provided prompt and returns a summary.",
+    "Retrieves information about an attachment (image, video, audio, PDF, RTF, or text-based files) from a given URL. For example, you can view images, watch videos, listen to music, or summarize documents.",
   parameters: {
     type: Type.OBJECT,
     properties: {
       prompt: {
         type: Type.STRING,
         description:
-          "A detailed prompt describing what information to extract from the attachment. Be specific about the type of analysis required (e.g., in-depth analysis, general outline, key points). This should be provided by you, the model, and not the user unless they specifically request it.",
+          "A detailed prompt describing what information to extract from the attachment. Be specific about the type of analysis required (e.g., in-depth analysis, general outline, key points, basic summary). This should be provided by you, the model, and not the user unless they specifically request it.",
       },
       url: {
         type: Type.STRING,
@@ -119,7 +119,7 @@ export const getAttachmentInfo: ToolDefinition = {
       contentType: {
         type: Type.STRING,
         description:
-          "The content type of the attachment (e.g., image/png, text/plain, video/mp4, audio/mp3, application/pdf). If not provided, the tool will attempt to infer it.",
+          "The content type of the attachment (e.g., image/png). If not provided, the tool will attempt to infer it.",
       },
     },
     required: ["prompt", "url"],

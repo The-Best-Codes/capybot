@@ -234,6 +234,7 @@ export async function buildReferenceContext(
       referencedMessage,
       "Details about attachments in the referenced message",
     );
+    buildStickerContext(referenceAttributes, referencedMessage);
   } catch (error) {
     referenceAttributes.add(
       "error",
@@ -301,5 +302,22 @@ export function buildAttachmentContext(
     attachmentNode
       .add("size", attachment.size.toString())
       .desc("Size in bytes");
+  });
+}
+
+export function buildStickerContext(context: Context, message: Message) {
+  if (message.stickers.size === 0) {
+    return;
+  }
+
+  const stickersContext = context
+    .add("stickers")
+    .desc("Details about the stickers in this message");
+
+  message.stickers.forEach((sticker) => {
+    const stickerNode = stickersContext.add(sticker.id);
+    stickerNode.add("name", sticker.name || "Unknown Sticker");
+    stickerNode.add("url", sticker.url);
+    stickerNode.add("description", sticker?.description || "None provided");
   });
 }
