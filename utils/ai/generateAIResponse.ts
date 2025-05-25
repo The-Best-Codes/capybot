@@ -1,4 +1,4 @@
-import { type Content } from "@google/genai";
+import { FunctionCallingConfigMode, type Content } from "@google/genai";
 import { genAI } from "../../clients/googleAi";
 import { logger } from "../logger";
 import { systemInstruction } from "./systemInstruction";
@@ -65,6 +65,11 @@ export async function generateAIResponse({
       config: {
         systemInstruction: systemInstruction(discordAppId),
         tools: [{ functionDeclarations }],
+        toolConfig: {
+          functionCallingConfig: {
+            mode: FunctionCallingConfigMode.AUTO,
+          },
+        },
       },
     });
 
