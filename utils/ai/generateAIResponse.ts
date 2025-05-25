@@ -10,6 +10,7 @@ async function executeTool(
   toolName: string | undefined,
   args: any,
   guildId?: string,
+  channelId?: string,
 ): Promise<any> {
   if (!toolName) {
     throw new Error("Tool name is required");
@@ -21,7 +22,7 @@ async function executeTool(
   }
 
   const tool = tools[toolName];
-  return await tool.function({ ...args, guildId });
+  return await tool.function({ ...args, guildId, channelId });
 }
 
 export async function generateAIResponse({
@@ -29,11 +30,13 @@ export async function generateAIResponse({
   discordAppId,
   modelName = process.env.GEMINI_AI_MODEL || "",
   guildId,
+  channelId,
 }: {
   conversationHistory: Content[];
   discordAppId: string;
   modelName: string;
   guildId?: string;
+  channelId?: string;
 }) {
   let currentHistory = [...conversationHistory];
   let steps = 0;
@@ -83,6 +86,7 @@ export async function generateAIResponse({
           functionCall.name,
           functionCall.args,
           guildId,
+          channelId,
         );
         logger.verbose(`Tool execution successful:`, toolResult);
 

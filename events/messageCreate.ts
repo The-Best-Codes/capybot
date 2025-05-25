@@ -9,15 +9,15 @@ import {
 import { buildConversationHistory } from "../utils/ai/context/history";
 import {
   addUserToCollection,
+  buildAttachmentContext,
   buildChannelContext,
   buildDMContext,
   buildEntityLookupContext,
   buildMentionsContext,
   buildReferenceContext,
   buildServerContext,
-  buildAttachmentContext,
-  type CollectedEntities,
   buildStickerContext,
+  type CollectedEntities,
 } from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { Context } from "../utils/contextBuilder";
@@ -103,8 +103,9 @@ export default {
       const response = await generateAIResponse({
         conversationHistory,
         discordAppId: process.env.DISCORD_APP_ID || "unknown",
-        guildId: guildId,
         modelName: process.env.GEMINI_AI_MODEL || "",
+        guildId: guildId,
+        channelId: message.channel.id,
       });
 
       const responseText = response;
