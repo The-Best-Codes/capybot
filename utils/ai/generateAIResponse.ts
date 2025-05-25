@@ -70,6 +70,7 @@ export async function generateAIResponse({
             mode: FunctionCallingConfigMode.AUTO,
           },
         },
+        //temperature: 0, // May uncomment for more reliable tool calls, but less casual roleplay
       },
     });
 
