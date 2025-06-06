@@ -6,8 +6,9 @@ import {
   addRoleToCollection,
   addUserToCollection,
   buildAttachmentContext,
-  type CollectedEntities,
+  buildInteractionContext,
   buildStickerContext,
+  type CollectedEntities,
 } from "./main";
 
 export async function buildConversationHistory(
@@ -110,23 +111,7 @@ export async function buildConversationHistory(
           }
         }
 
-        if (msg.interactionMetadata) {
-          const interactionNode = historyContext
-            .add("interaction")
-            .desc(
-              "This message is a response to an interaction (e.g., a slash command)",
-            );
-
-          interactionNode.add("id", msg.interactionMetadata.id);
-          interactionNode
-            .add("user-id", msg.interactionMetadata.user.id)
-            .desc("User who invoked the command");
-
-          addUserToCollection(
-            allMentionedEntities,
-            msg.interactionMetadata.user,
-          );
-        }
+        buildInteractionContext(historyContext, msg, allMentionedEntities);
 
         buildAttachmentContext(
           historyContext,

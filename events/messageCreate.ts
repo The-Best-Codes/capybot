@@ -6,6 +6,7 @@ import {
   Message,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
+import fs from "fs";
 import { buildConversationHistory } from "../utils/ai/context/history";
 import {
   addUserToCollection,
@@ -97,6 +98,11 @@ export default {
         role: "user",
         parts: currentMessageParts,
       });
+
+      fs.writeFileSync(
+        "data/conversationHistory.json",
+        JSON.stringify(conversationHistory),
+      );
 
       const guildId = message.guild?.id;
 
