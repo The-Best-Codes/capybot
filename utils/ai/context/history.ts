@@ -6,7 +6,7 @@ import {
   addRoleToCollection,
   addUserToCollection,
   buildAttachmentContext,
-  buildInteractionContext,
+  //buildInteractionContext, // TODO: This got removed somehow, check older commits of main.ts?
   buildStickerContext,
   type CollectedEntities,
 } from "./main";
@@ -111,7 +111,7 @@ export async function buildConversationHistory(
           }
         }
 
-        buildInteractionContext(historyContext, msg, allMentionedEntities);
+        //buildInteractionContext(historyContext, msg, allMentionedEntities);
 
         buildAttachmentContext(
           historyContext,
