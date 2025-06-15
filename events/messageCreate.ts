@@ -1,10 +1,10 @@
 import type { Content } from "@google/genai";
 import {
-  ChannelType,
   Client,
   Events,
   Message,
   MessageFlags,
+  TextDisplayBuilder,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
 import { buildConversationHistory } from "../utils/ai/context/history";
@@ -12,7 +12,6 @@ import {
   addUserToCollection,
   buildAttachmentContext,
   buildChannelContext,
-  buildDMContext,
   buildEntityLookupContext,
   buildMentionsContext,
   buildReferenceContext,
@@ -38,7 +37,9 @@ export default {
     const mentionsEveryone = message.mentions.everyone;
     const shouldRespond = mentionsBot || mentionsEveryone;
 
-    if (!shouldRespond && message.channel.type !== ChannelType.DM) return; // Only respond to DMs and messages mentioning the bot or everyone
+    // Only respond to messages mentioning the bot or everyone.
+    // This implicitly limits responses to guild channels.
+    if (!shouldRespond) return;
 
     try {
       await message.channel.sendTyping();
@@ -67,15 +68,10 @@ export default {
 
       if (message.guild) {
         logger.log(
-          `Responding to message ${message.id} in guild ${message.guild.name}.`,
+          `Responding to message ${message.id} in guild ${message.guild?.name}.`,
         );
         buildServerContext(context, message);
         buildChannelContext(context, message);
-      } else {
-        buildDMContext(context, message);
-        logger.log(
-          `Responding to DM ${message.id} from ${message.author.username}. Content: ${message.content}.`,
-        );
       }
 
       const conversationHistory: Content[] = await buildConversationHistory(
@@ -136,19 +132,23 @@ export default {
 
         const replyOptions: any = {
           content: response.components
-            ? undefined
+            ? // content should be undefined if components are present
+              undefined
             : escapeMentions(trimmedResponse),
         };
 
         // Add Components V2 if we have tool calls
         if (response.components && response.components.length > 0) {
-          replyOptions.components = response.components;
+          // Add the trimmed response text as a TextDisplayBuilder component
+          const textComponent = new TextDisplayBuilder().setContent(
+            escapeMentions(trimmedResponse),
+          );
+          // Ensure components is an array, add the text component at the beginning
+          replyOptions.components = [
+            textComponent,
+            ...(response.components || []),
+          ];
           replyOptions.flags = MessageFlags.IsComponentsV2;
-
-          // If we only have components, add the text as content too
-          if (!replyOptions.content) {
-            replyOptions.content = escapeMentions(trimmedResponse);
-          }
         }
 
         const botMessage = await message.reply(replyOptions);
