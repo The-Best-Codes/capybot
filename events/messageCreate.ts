@@ -4,7 +4,6 @@ import {
   Events,
   Message,
   MessageFlags,
-  TextDisplayBuilder,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
 import { buildConversationHistory } from "../utils/ai/context/history";
@@ -132,22 +131,13 @@ export default {
 
         const replyOptions: any = {
           content: response.components
-            ? // content should be undefined if components are present
-              undefined
+            ? undefined
             : escapeMentions(trimmedResponse),
         };
 
         // Add Components V2 if we have tool calls
         if (response.components && response.components.length > 0) {
-          // Add the trimmed response text as a TextDisplayBuilder component
-          const textComponent = new TextDisplayBuilder().setContent(
-            escapeMentions(trimmedResponse),
-          );
-          // Ensure components is an array, add the text component at the beginning
-          replyOptions.components = [
-            textComponent,
-            ...(response.components || []),
-          ];
+          replyOptions.components = response.components;
           replyOptions.flags = MessageFlags.IsComponentsV2;
         }
 
