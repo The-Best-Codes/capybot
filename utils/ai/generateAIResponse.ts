@@ -1,5 +1,12 @@
 import { FunctionCallingConfigMode, type Content } from "@google/genai";
+import {
+  ContainerBuilder,
+  SeparatorBuilder,
+  SeparatorSpacingSize,
+  TextDisplayBuilder,
+} from "discord.js";
 import { genAI } from "../../clients/googleAi";
+import { database, type AIResponsePart } from "../database";
 import { logger } from "../logger";
 import { systemInstruction } from "./systemInstruction";
 import { tools } from "./tools";
@@ -25,26 +32,37 @@ async function executeTool(
   return await tool.function({ ...args, guildId, channelId });
 }
 
+export interface AIResponse {
+  text: string;
+  components?: any[];
+  responseId: string;
+}
+
 export async function generateAIResponse({
   conversationHistory,
   discordAppId,
   modelName = process.env.GEMINI_AI_MODEL || "",
   guildId,
   channelId,
+  responseMessageId,
 }: {
   conversationHistory: Content[];
   discordAppId: string;
   modelName: string;
   guildId?: string;
   channelId?: string;
-}) {
+  responseMessageId: string;
+}): Promise<AIResponse> {
   let currentHistory = [...conversationHistory];
   let steps = 0;
   let finalResponse = "";
+  const responseId = `${responseMessageId}_${Date.now()}`;
+  const components: any[] = [];
+  let partOrder = 0;
 
   if (modelName === "") {
     logger.error("Gemini AI Model is not provided");
-    return "Error: Gemini AI Model is not set";
+    return { text: "Error: Gemini AI Model is not set", responseId };
   }
 
   while (steps < MAX_TOOL_CALL_STEPS) {
@@ -78,7 +96,7 @@ export async function generateAIResponse({
     if (!aiResponse || !aiResponse.parts || aiResponse.parts.length === 0) {
       logger.log("No response parts from AI");
       logger.verbose("AI response: ", response);
-      return "Error: No response from AI";
+      return { text: "Error: No response from AI", responseId };
     }
 
     const aiPart = aiResponse.parts[0];
@@ -86,6 +104,28 @@ export async function generateAIResponse({
     if (aiPart.functionCall) {
       const functionCall = aiPart.functionCall;
       logger.verbose(`AI requested function call: ${functionCall.name}`);
+
+      // Save tool call to database
+      const toolCallPart: AIResponsePart = {
+        id: `${responseId}_tool_call_${partOrder}`,
+        messageId: responseMessageId,
+        type: "tool_call",
+        content: `Called tool: ${functionCall.name}`,
+        toolName: functionCall.name,
+        toolArgs: functionCall.args,
+        timestamp: new Date().toISOString(),
+        order: partOrder++,
+      };
+      await database.saveAIResponsePart(toolCallPart);
+
+      // Add tool call component
+      components.push(
+        new ContainerBuilder().addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(
+            `Used tool \`${functionCall.name}\`.`,
+          ),
+        ),
+      );
 
       try {
         const toolResult = await executeTool(
@@ -95,6 +135,19 @@ export async function generateAIResponse({
           channelId,
         );
         logger.verbose(`Tool execution successful:`, toolResult);
+
+        // Save tool response to database
+        const toolResponsePart: AIResponsePart = {
+          id: `${responseId}_tool_response_${partOrder}`,
+          messageId: responseMessageId,
+          type: "tool_response",
+          content: `Tool result: ${JSON.stringify(toolResult)}`,
+          toolName: functionCall.name,
+          toolResult: toolResult,
+          timestamp: new Date().toISOString(),
+          order: partOrder++,
+        };
+        await database.saveAIResponsePart(toolResponsePart);
 
         currentHistory.push({
           role: "model",
@@ -120,6 +173,18 @@ export async function generateAIResponse({
     } else if (aiPart.text) {
       logger.verbose("AI returned text response (no function call)");
       finalResponse = aiPart.text;
+
+      // Save text response to database
+      const textPart: AIResponsePart = {
+        id: `${responseId}_text_${partOrder}`,
+        messageId: responseMessageId,
+        type: "text",
+        content: aiPart.text,
+        timestamp: new Date().toISOString(),
+        order: partOrder++,
+      };
+      await database.saveAIResponsePart(textPart);
+
       break;
     } else if (aiPart.thought !== undefined) {
       logger.verbose("AI returned a thinking response");
@@ -146,5 +211,23 @@ export async function generateAIResponse({
       "Reached maximum tool call steps. Could not complete the request.";
   }
 
-  return finalResponse || "Error: No response from AI";
+  // Add separator if we have both components and text
+  if (components.length > 0 && finalResponse) {
+    components.push(
+      new SeparatorBuilder()
+        .setSpacing(SeparatorSpacingSize.Large)
+        .setDivider(true),
+    );
+  }
+
+  // Add final text response as component if we have other components
+  if (components.length > 0 && finalResponse) {
+    components.push(new TextDisplayBuilder().setContent(finalResponse));
+  }
+
+  return {
+    text: finalResponse || "Error: No response from AI",
+    components: components.length > 0 ? components : undefined,
+    responseId,
+  };
 }

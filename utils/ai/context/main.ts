@@ -321,3 +321,6 @@ export function buildStickerContext(context: Context, message: Message) {
     stickerNode.add("description", sticker?.description || "None provided");
   });
 }
+
+// Re-export buildInteractionContext from interactionContext.ts
+export { buildInteractionContext } from "./interactionContext";

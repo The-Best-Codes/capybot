@@ -8,16 +8,20 @@
   "scripts": {
     "start": "discraft start",
     "build": "discraft build",
-    "dev": "discraft dev"
+    "dev": "discraft dev",
+    "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "discraft": "^1.7.7"
+    "discraft": "^1.7.7",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "@google/genai": "^1.4.0",
+    "@types/sqlite3": "^5.1.0",
     "consola": "^3.4.2",
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",
-    "fastest-levenshtein": "^1.0.16"
+    "fastest-levenshtein": "^1.0.16",
+    "sqlite3": "^5.1.7"
   }
 }
