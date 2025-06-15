@@ -59,6 +59,7 @@ export async function generateAIResponse({
   const responseId = `${responseMessageId}_${Date.now()}`;
   const components: any[] = [];
   let partOrder = 0;
+  let lastWasToolCall = false;
 
   if (modelName === "") {
     logger.error("Gemini AI Model is not provided");
@@ -118,6 +119,15 @@ export async function generateAIResponse({
       };
       await database.saveAIResponsePart(toolCallPart);
 
+      // Add separator before tool call if the last action was also a tool call
+      if (lastWasToolCall) {
+        components.push(
+          new SeparatorBuilder()
+            .setSpacing(SeparatorSpacingSize.Large)
+            .setDivider(true),
+        );
+      }
+
       // Add tool call component
       components.push(
         new ContainerBuilder().addTextDisplayComponents(
@@ -126,6 +136,8 @@ export async function generateAIResponse({
           ),
         ),
       );
+
+      lastWasToolCall = true;
 
       try {
         const toolResult = await executeTool(
@@ -168,6 +180,7 @@ export async function generateAIResponse({
       } catch (error: any) {
         logger.error(`Error executing tool ${functionCall.name}:`, error);
         finalResponse = `Error: Issue executing tool ${functionCall.name}: ${error.message}`;
+        lastWasToolCall = false;
         break;
       }
     } else if (aiPart.text) {
@@ -185,6 +198,7 @@ export async function generateAIResponse({
       };
       await database.saveAIResponsePart(textPart);
 
+      lastWasToolCall = false;
       break;
     } else if (aiPart.thought !== undefined) {
       logger.verbose("AI returned a thinking response");
@@ -195,6 +209,7 @@ export async function generateAIResponse({
 
       if (steps >= MAX_TOOL_CALL_STEPS) {
         finalResponse = aiPart.text || "Warning: The AI is still thinking...";
+        lastWasToolCall = false;
       }
     } else {
       logger.verbose(
@@ -202,6 +217,7 @@ export async function generateAIResponse({
       );
       logger.verbose("Response part:", JSON.stringify(aiPart));
       finalResponse = "Error: Invalid AI response format";
+      lastWasToolCall = false;
       break;
     }
   }
@@ -209,10 +225,11 @@ export async function generateAIResponse({
   if (steps >= MAX_TOOL_CALL_STEPS && !finalResponse) {
     finalResponse =
       "Reached maximum tool call steps. Could not complete the request.";
+    lastWasToolCall = false;
   }
 
-  // Add separator if we have both components and text
-  if (components.length > 0 && finalResponse) {
+  // Add separator before final text if we have components and the last action was a tool call
+  if (components.length > 0 && finalResponse && lastWasToolCall) {
     components.push(
       new SeparatorBuilder()
         .setSpacing(SeparatorSpacingSize.Large)
