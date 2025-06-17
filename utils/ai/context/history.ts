@@ -69,7 +69,7 @@ export async function buildConversationHistory(
         if (index < currentIndex) return false;
         const content =
           "content" in msg ? msg.content : (msg as ConversationMessage).content;
-        return content.includes(clearHistoryMarker);
+        return (content ?? "").includes(clearHistoryMarker);
       });
       if (nextMarkerIndex !== -1) {
         lastMarkerIndex = nextMarkerIndex;
