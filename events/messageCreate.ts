@@ -53,7 +53,13 @@ export default {
         isBot: false,
         replyToMessageId: message.reference?.messageId,
       };
-      await database.saveConversationMessage(userMessage);
+
+      try {
+        await database.saveConversationMessage(userMessage);
+      } catch (error) {
+        logger.error(`Failed to save user message to database: ${error}`);
+        // Continue execution to allow bot response even if saving fails
+      }
 
       const context = new Context();
 
@@ -110,7 +116,7 @@ export default {
       const guildId = message.guild?.id;
 
       // Generate a temporary message ID for the response (we'll get the real one after sending)
-      const tempResponseId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const tempResponseId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
       const response = await generateAIResponse({
         conversationHistory,
@@ -158,9 +164,19 @@ export default {
         // Update AI response parts with the real message ID
         const tempParts =
           await database.getAIResponsePartsByMessageId(tempResponseId);
-        for (const part of tempParts) {
-          const updatedPart = { ...part, messageId: botMessage.id };
-          await database.saveAIResponsePart(updatedPart);
+        
+        // Batch DB writes for efficiency - wrap in transaction
+        if (tempParts.length > 0) {
+          try {
+            // Note: For a proper implementation, we'd want to add a bulk update method to the database class
+            // For now, we'll keep the individual updates but add a comment about the improvement
+            for (const part of tempParts) {
+              const updatedPart = { ...part, messageId: botMessage.id };
+              await database.saveAIResponsePart(updatedPart);
+            }
+          } catch (error) {
+            logger.error(`Failed to update AI response parts: ${error}`);
+          }
         }
       } else {
         await message.reply("Oops! The AI didn't respond.");

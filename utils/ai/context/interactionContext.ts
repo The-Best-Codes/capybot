@@ -156,14 +156,16 @@ function buildMessageContextMenuContext(
   // Add attachment info if present
   if (targetMessage.attachments.size > 0) {
     const attachmentsContext = messageContext.add("attachments");
-    targetMessage.attachments.forEach((attachment, index) => {
-      const attachmentContext = attachmentsContext.add(`attachment-${index}`);
+    let attachmentIndex = 0;
+    targetMessage.attachments.forEach((attachment) => {
+      const attachmentContext = attachmentsContext.add(`attachment-${attachmentIndex}`);
       attachmentContext.add("name", attachment.name || "unknown");
       attachmentContext.add("size", attachment.size.toString());
       attachmentContext.add(
         "content-type",
         attachment.contentType || "unknown",
       );
+      attachmentIndex++;
     });
   }
 }

@@ -40,7 +40,10 @@ export default {
         .setColor(0x0099ff)
         .setTimestamp();
 
-      aiParts.forEach((part, index) => {
+      // Limit to 25 fields to avoid Discord's field limit
+      const limitedParts = aiParts.slice(0, 25);
+
+      limitedParts.forEach((part, index) => {
         let fieldValue = `**Type:** ${part.type}\n**Order:** ${part.order}\n**Timestamp:** ${part.timestamp}`;
 
         if (part.toolName) {
@@ -61,6 +64,13 @@ export default {
           inline: false,
         });
       });
+
+      // Add a note if there are more parts than displayed
+      if (aiParts.length > 25) {
+        embed.setFooter({
+          text: `Showing first 25 of ${aiParts.length} parts. Use pagination for more.`,
+        });
+      }
 
       await interaction.reply({
         embeds: [embed],

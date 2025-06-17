@@ -1,6 +1,21 @@
+import fs from "fs";
 import path from "path";
 import sqlite3 from "sqlite3";
 import { logger } from "./logger";
+
+// Helper function to safely parse JSON data
+function safeJsonParse(
+  jsonString: string | null,
+  fallback: any = undefined,
+): any {
+  if (!jsonString) return fallback;
+  try {
+    return JSON.parse(jsonString);
+  } catch (error) {
+    console.error(`Failed to parse JSON data:`, error);
+    return fallback;
+  }
+}
 
 export interface AIResponsePart {
   id: string;
@@ -34,7 +49,6 @@ class Database {
     this.dbPath = path.join(dataDir, "context.db");
 
     // Ensure data directory exists
-    const fs = require("fs");
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
@@ -144,10 +158,8 @@ class Database {
               type: row.type,
               content: row.content,
               toolName: row.tool_name,
-              toolArgs: row.tool_args ? JSON.parse(row.tool_args) : undefined,
-              toolResult: row.tool_result
-                ? JSON.parse(row.tool_result)
-                : undefined,
+              toolArgs: safeJsonParse(row.tool_args),
+              toolResult: safeJsonParse(row.tool_result),
               timestamp: row.timestamp,
               order: row.order_num,
             }));
@@ -174,10 +186,8 @@ class Database {
               type: row.type,
               content: row.content,
               toolName: row.tool_name,
-              toolArgs: row.tool_args ? JSON.parse(row.tool_args) : undefined,
-              toolResult: row.tool_result
-                ? JSON.parse(row.tool_result)
-                : undefined,
+              toolArgs: safeJsonParse(row.tool_args),
+              toolResult: safeJsonParse(row.tool_result),
               timestamp: row.timestamp,
               order: row.order_num,
             }));
