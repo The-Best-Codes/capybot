@@ -1,4 +1,5 @@
 import { addReaction } from "./addReaction";
+import { executeJsCode } from "./executeJsCode";
 import { getAttachmentInfo } from "./getAttachmentInfo";
 import { getUserInfo } from "./getUserInfo";
 import { searchChannels } from "./searchChannels";
@@ -12,6 +13,7 @@ export const tools = {
   [searchChannels.name]: searchChannels,
   [searchRoles.name]: searchRoles,
   [searchServerMembers.name]: searchServerMembers,
+  [executeJsCode.name]: executeJsCode,
 };
 
 export type ToolName = keyof typeof tools;
