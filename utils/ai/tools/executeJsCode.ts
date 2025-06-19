@@ -50,12 +50,18 @@ async function executeJsCodeFn({ code }: { code: string }): Promise<{
   } else {
     let resultString;
     try {
-      resultString = JSON.stringify(result);
+-     resultString = JSON.stringify(result);
++     resultString = JSON.stringify(result, (_, v) => v, 2);
++     const MAX = 4_096;
++     if (resultString.length > MAX) {
++       resultString = resultString.slice(0, MAX) + "...[truncated]";
++     }
     } catch (jsonError: any) {
       logger.error("Error stringifying JS execution result:", jsonError);
       resultString = `Execution succeeded, but result could not be serialized: ${jsonError.message}. Result type: ${typeof result}`;
     }
     return { status: "success", result: resultString };
+  }
   }
 }
 
