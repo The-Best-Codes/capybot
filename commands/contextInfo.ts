@@ -72,9 +72,11 @@ export default {
         });
       }
 
-      await interaction.reply({
+      // instead of replying directly (which must ack within 3 s), defer first
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+      // then edit the deferred reply with our embed
+      await interaction.editReply({
         embeds: [embed],
-        flags: MessageFlags.Ephemeral,
       });
     } else {
       // Show general context info
