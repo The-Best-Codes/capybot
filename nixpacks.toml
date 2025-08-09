@@ -1,4 +1,5 @@
 [phases.setup]
+nixpkgsArchive = "a8cae9466f5b9e3564cf8058d7d9a7496af53f01"
 aptPkgs = ["python3", "g++", "make"]
 
 [phases.install]
