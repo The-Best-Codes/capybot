@@ -1,2 +1,11 @@
 [phases.setup]
-pkgs = ["python3", "g++", "make", "bun"]
+pkgs = ["bun", "npm", "nodejs", "python3", "g++", "make"]
+
+[phases.install]
+cmds = ["bun install"]
+
+[phases.build]
+cmds = ["bun run build"]
+
+[start]
+cmd = "bunx --bun discraft start --runner node"
