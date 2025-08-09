@@ -1,14 +1,5 @@
-providers = []
-
 [phases.setup]
-pkgs = [
-  "nodejs_18",
-  "npm-9_x",
-  "bun",
-  "python3",
-  "g++",
-  "make"
-]
+aptPkgs = ["python3", "g++", "make"]
 
 [phases.install]
 cmds = ["bun install --frozen-lockfile"]
