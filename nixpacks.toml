@@ -1,8 +1,17 @@
+providers = []
+
 [phases.setup]
-pkgs = ["bun", "npm", "nodejs", "python3", "g++", "make"]
+pkgs = [
+  "nodejs_18",
+  "npm-9_x",
+  "bun",
+  "python3",
+  "g++",
+  "make"
+]
 
 [phases.install]
-cmds = ["bun install"]
+cmds = ["bun install --frozen-lockfile"]
 
 [phases.build]
 cmds = ["bun run build"]
