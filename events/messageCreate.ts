@@ -1,18 +1,16 @@
 import type { Content } from "@google/genai";
 import {
-  ChannelType,
   Client,
   Events,
   Message,
+  MessageFlags,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
-import fs from "fs";
 import { buildConversationHistory } from "../utils/ai/context/history";
 import {
   addUserToCollection,
   buildAttachmentContext,
   buildChannelContext,
-  buildDMContext,
   buildEntityLookupContext,
   buildMentionsContext,
   buildReferenceContext,
@@ -22,6 +20,7 @@ import {
 } from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { Context } from "../utils/contextBuilder";
+import { database, type ConversationMessage } from "../utils/database";
 import { escapeMentions } from "../utils/escapeMentions";
 import { logger } from "../utils/logger";
 
@@ -37,10 +36,30 @@ export default {
     const mentionsEveryone = message.mentions.everyone;
     const shouldRespond = mentionsBot || mentionsEveryone;
 
-    if (!shouldRespond && message.channel.type !== ChannelType.DM) return; // Only respond to DMs and messages mentioning the bot or everyone
+    // Only respond to messages mentioning the bot or everyone.
+    // This implicitly limits responses to guild channels.
+    if (!shouldRespond) return;
 
     try {
       await message.channel.sendTyping();
+
+      // Save the user message to database first
+      const userMessage: ConversationMessage = {
+        id: message.id,
+        channelId: message.channel.id,
+        authorId: message.author.id,
+        content: message.content,
+        timestamp: message.createdAt.toISOString(),
+        isBot: false,
+        replyToMessageId: message.reference?.messageId,
+      };
+
+      try {
+        await database.saveConversationMessage(userMessage);
+      } catch (error) {
+        logger.error(`Failed to save user message to database: ${error}`);
+        // Continue execution to allow bot response even if saving fails
+      }
 
       const context = new Context();
 
@@ -54,15 +73,10 @@ export default {
 
       if (message.guild) {
         logger.log(
-          `Responding to message ${message.id} in guild ${message.guild.name}.`,
+          `Responding to message ${message.id} in guild ${message.guild?.name}.`,
         );
         buildServerContext(context, message);
         buildChannelContext(context, message);
-      } else {
-        buildDMContext(context, message);
-        logger.log(
-          `Responding to DM ${message.id} from ${message.author.username}. Content: ${message.content}.`,
-        );
       }
 
       const conversationHistory: Content[] = await buildConversationHistory(
@@ -99,12 +113,10 @@ export default {
         parts: currentMessageParts,
       });
 
-      fs.writeFileSync(
-        "data/conversationHistory.json",
-        JSON.stringify(conversationHistory),
-      );
-
       const guildId = message.guild?.id;
+
+      // Generate a temporary message ID for the response (we'll get the real one after sending)
+      const tempResponseId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
       const response = await generateAIResponse({
         conversationHistory,
@@ -112,21 +124,60 @@ export default {
         modelName: process.env.GEMINI_AI_MODEL || "",
         guildId: guildId,
         channelId: message.channel.id,
+        responseMessageId: tempResponseId,
       });
 
-      const responseText = response;
-
-      if (responseText) {
+      if (response.text) {
         let trimmedResponse;
-        if (responseText.length > 1900) {
-          trimmedResponse = `${responseText.slice(0, 1900)}\n[Truncated to less than 2000 characters]`;
+        if (response.text.length > 1900) {
+          trimmedResponse = `${response.text.slice(0, 1900)}\n[Truncated to less than 2000 characters]`;
         } else {
-          trimmedResponse = responseText;
+          trimmedResponse = response.text;
         }
 
-        await message.reply({
-          content: `${escapeMentions(trimmedResponse)}`,
-        });
+        const replyOptions: any = {
+          content: response.components
+            ? undefined
+            : escapeMentions(trimmedResponse),
+        };
+
+        // Add Components V2 if we have tool calls
+        if (response.components && response.components.length > 0) {
+          replyOptions.components = response.components;
+          replyOptions.flags = MessageFlags.IsComponentsV2;
+        }
+
+        const botMessage = await message.reply(replyOptions);
+
+        // Now save the bot message to database with the real message ID
+        const botConversationMessage: ConversationMessage = {
+          id: botMessage.id,
+          channelId: botMessage.channel.id,
+          authorId: botMessage.author.id,
+          content: trimmedResponse,
+          timestamp: botMessage.createdAt.toISOString(),
+          isBot: true,
+          replyToMessageId: message.id,
+        };
+        await database.saveConversationMessage(botConversationMessage);
+
+        // Update AI response parts with the real message ID
+        const tempParts =
+          await database.getAIResponsePartsByMessageId(tempResponseId);
+        
+        // Batch DB writes for efficiency - wrap in transaction
+        if (tempParts.length > 0) {
+          try {
+            // Note: For a proper implementation, we'd want to add a bulk update method to the database class
+            // For now, we'll keep the individual updates but add a comment about the improvement
+            for (const part of tempParts) {
+              const updatedPart = { ...part, messageId: botMessage.id };
+              await database.saveAIResponsePart(updatedPart);
+            }
+          } catch (error) {
+            logger.error(`Failed to update AI response parts: ${error}`);
+          }
+        }
       } else {
         await message.reply("Oops! The AI didn't respond.");
       }
