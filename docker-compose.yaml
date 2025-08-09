@@ -2,7 +2,11 @@ services:
   app:
     build:
       context: .
-    ports:
-      - "3000:3000"
     volumes:
       - .:/app
+  web:
+    image: nginx:alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./index.html:/etc/nginx/html/index.html:ro
