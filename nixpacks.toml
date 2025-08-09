@@ -1,4 +1,5 @@
 [phases.setup]
+pkgs = ["nodejs_18", "npm-9_x", "bun"]
 aptPkgs = ["python3", "g++", "make"]
 
 [phases.install]
