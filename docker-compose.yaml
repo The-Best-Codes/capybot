@@ -9,4 +9,4 @@ services:
     ports:
       - "3000:80"
     volumes:
-      - ./index.html:/etc/nginx/html/index.html:ro
+      - ./public:/usr/share/nginx/html:ro
