@@ -2,10 +2,10 @@
 aptPkgs = ["python3", "g++", "make"]
 
 [phases.install]
-cmds = ["npm install -g bun@latest", "bun install --frozen-lockfile"]
+cmds = ["npm install --frozen-lockfile"]
 
 [phases.build]
-cmds = ["bun run build"]
+cmds = ["npm run build"]
 
 [start]
-cmd = "bunx --bun discraft start --runner node"
+cmd = "npx discraft start --runner node"
