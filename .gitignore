@@ -1,8 +1,8 @@
 dist
 node_modules
 bun.lockb
-bun.lock
 yarn.lock
+package-lock.json
 pnpm-lock.yaml
 .env
 .discraft
