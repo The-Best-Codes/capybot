@@ -6,8 +6,11 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     curl \
+    unzip \
     git \
     python3 \
+    make \
+    g++ \
     ca-certificates \
     software-properties-common && \
     rm -rf /var/lib/apt/lists/*
