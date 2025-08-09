@@ -1,5 +1,7 @@
+[providers.node]
+version = "23"
+
 [phases.setup]
-pkgs = ["nodejs_23"]
 aptPkgs = ["python3", "g++", "make"]
 
 [phases.install]
