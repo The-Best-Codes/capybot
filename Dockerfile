@@ -9,6 +9,7 @@ RUN apt-get update && \
     unzip \
     git \
     python3 \
+    python3-setuptools \
     make \
     g++ \
     ca-certificates \
