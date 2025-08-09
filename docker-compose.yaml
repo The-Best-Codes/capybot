@@ -1,10 +1,12 @@
 services:
   app:
+    # exclude_from_hc: true
     build:
       context: .
     volumes:
       - .:/app
   web:
+    # exclude_from_hc: true
     image: nginx:alpine
     ports:
       - "3000:80"
