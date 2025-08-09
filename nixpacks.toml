@@ -1,0 +1,2 @@
+[phases.setup]
+pkgs = ["python3", "g++", "make"]
