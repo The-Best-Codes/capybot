@@ -3,6 +3,8 @@ services:
     # exclude_from_hc: true
     build:
       context: .
+    volumes:
+      - ./persisted/data/:/app/data
   web:
     build:
       context: .
