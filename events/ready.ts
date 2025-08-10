@@ -33,7 +33,7 @@ export default {
       const parts = [{ text: prompt }];
 
       const result = await models.generateContent({
-        model: process.env.GEMINI_AI_MODEL || "",
+        model: process.env.GEMINI_AI_MODEL || "gemini-2.0-flash-lite",
         contents: parts,
         config: {
           responseMimeType: "application/json",
