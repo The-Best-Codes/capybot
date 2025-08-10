@@ -1,6 +1,6 @@
 import { addReaction } from "./addReaction";
 import { browseUrl } from "./browseUrl";
-import { executeJsCode } from "./executeJsCode";
+import { executeCode } from "./executeCode";
 import { getAttachmentInfo } from "./getAttachmentInfo";
 import { getServerInfo } from "./getServerInfo";
 import { getUserInfo } from "./getUserInfo";
@@ -17,7 +17,7 @@ export const tools = {
   [searchChannels.name]: searchChannels,
   [searchRoles.name]: searchRoles,
   [searchServerMembers.name]: searchServerMembers,
-  [executeJsCode.name]: executeJsCode,
+  [executeCode.name]: executeCode,
   [searchGoogle.name]: searchGoogle,
   [browseUrl.name]: browseUrl,
 };

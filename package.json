@@ -20,12 +20,10 @@
   },
   "dependencies": {
     "@google/genai": "^1.13.0",
-    "@types/sqlite3": "^5.1.0",
     "consola": "^3.4.2",
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.1",
     "fastest-levenshtein": "^1.0.16",
-    "isolated-vm": "^6.0.1",
     "sqlite3": "^5.1.7"
   },
   "packageManager": "bun@1.2.20"
