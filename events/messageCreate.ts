@@ -147,6 +147,11 @@ export default {
           replyOptions.flags = MessageFlags.IsComponentsV2;
         }
 
+        replyOptions.allowedMentions = {
+          parse: [],
+          repliedUser: false,
+        };
+
         const botMessage = await message.reply(replyOptions);
 
         // Now save the bot message to database with the real message ID
@@ -164,7 +169,7 @@ export default {
         // Update AI response parts with the real message ID
         const tempParts =
           await database.getAIResponsePartsByMessageId(tempResponseId);
-        
+
         // Batch DB writes for efficiency - wrap in transaction
         if (tempParts.length > 0) {
           try {
@@ -179,13 +184,23 @@ export default {
           }
         }
       } else {
-        await message.reply("Oops! The AI didn't respond.");
+        await message.reply({
+          content: "Oops! The AI didn't respond.",
+          allowedMentions: {
+            parse: [],
+            repliedUser: false,
+          },
+        });
       }
     } catch (error) {
       logger.error(`Error generating AI response: ${error}`);
-      await message.reply(
-        "Oh no! Something went wrong when I tried to respond to you.",
-      );
+      await message.reply({
+        content: "Oh no! Something went wrong when I tried to respond to you.",
+        allowedMentions: {
+          parse: [],
+          repliedUser: false,
+        },
+      });
     }
   },
 };
