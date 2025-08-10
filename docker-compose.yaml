@@ -5,6 +5,7 @@ services:
       context: .
     volumes:
       - ./persisted/data/:/app/data
+      - ./bun_cache:/root/.bun/install
   web:
     build:
       context: .
