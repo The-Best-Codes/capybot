@@ -6,9 +6,10 @@ services:
     volumes:
       - .:/app
   web:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
     # exclude_from_hc: true
     image: nginx:alpine
     ports:
       - "3000:80"
-    volumes:
-      - ./public:/usr/share/nginx/html:ro
