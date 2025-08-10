@@ -101,7 +101,7 @@ async function getAttachmentInfoFn({
 }
 
 export const getAttachmentInfo: ToolDefinition = {
-  name: "tool_getAttachmentInfo",
+  name: "get_attachment_info",
   description:
     "Retrieves information about an attachment (image, video, audio, PDF, RTF, or text-based files) from a given URL. For example, you can view images, watch videos, listen to music, or summarize documents.",
   parameters: {

@@ -18,7 +18,7 @@ type ChannelAttribute = (typeof CHANNEL_ATTRIBUTES)[number];
 type SearchAlgorithm = "exact" | "levenshtein";
 
 export const searchChannels: ToolDefinition = {
-  name: "tool_searchChannels",
+  name: "search_channels",
   description: "Searches for channels in the Discord server",
   parameters: {
     type: Type.OBJECT,

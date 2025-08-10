@@ -3,7 +3,7 @@ import client from "../../../clients/discord";
 import type { ToolDefinition } from "./types";
 
 export const addReaction: ToolDefinition = {
-  name: "tool_addReaction",
+  name: "add_reaction",
   description: "Adds a reaction or reactions to a specific message",
   parameters: {
     type: Type.OBJECT,

@@ -22,7 +22,7 @@ const USER_ATTRIBUTES = [
 type UserAttribute = (typeof USER_ATTRIBUTES)[number];
 
 export const getUserInfo: ToolDefinition = {
-  name: "tool_getUserInfo",
+  name: "get_user_info",
   description: "Retrieves information about a Discord user",
   parameters: {
     type: Type.OBJECT,

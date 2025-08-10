@@ -17,7 +17,7 @@ type RoleAttribute = (typeof ROLE_ATTRIBUTES)[number];
 type SearchAlgorithm = "exact" | "levenshtein";
 
 export const searchRoles: ToolDefinition = {
-  name: "tool_searchRoles",
+  name: "search_roles",
   description: "Searches for roles in the Discord server",
   parameters: {
     type: Type.OBJECT,

@@ -20,7 +20,7 @@ type MemberAttribute = (typeof MEMBER_ATTRIBUTES)[number];
 type SearchAlgorithm = "exact" | "levenshtein";
 
 export const searchServerMembers: ToolDefinition = {
-  name: "tool_searchServerMembers",
+  name: "search_server_members",
   description: "Searches for members in the Discord server",
   parameters: {
     type: Type.OBJECT,
