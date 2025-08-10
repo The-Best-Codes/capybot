@@ -1,7 +1,7 @@
 {
   "name": "discraft-bot",
   "private": true,
-  "version": "0.0.0-beta.30",
+  "version": "0.0.0-beta.31",
   "description": "Bot created with discraft",
   "module": "index.ts",
   "type": "module",
