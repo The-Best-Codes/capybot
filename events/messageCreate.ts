@@ -181,21 +181,23 @@ export default {
           }
         }
       } else {
-        await message.reply({
-          content: "Oops! The AI didn't respond.",
+        logger.error("AI response text part is empty.");
+        /* await message.reply({
+          content: "An error occurred: `Error: AI response text part is empty.`",
           allowedMentions: {
             parse: [],
             repliedUser: false,
           },
-        });
+        }); */
       }
     } catch (error) {
       logger.error(`Error generating AI response: ${error}`);
       await message.reply({
-        content: "Oh no! Something went wrong when I tried to respond to you.",
+        content:
+          "Looks like I'm getting too popular... wait a bit and message me again. I can't respond right now :(",
         allowedMentions: {
           parse: [],
-          repliedUser: false,
+          repliedUser: true,
         },
       });
     }
