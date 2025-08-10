@@ -3,8 +3,6 @@ services:
     # exclude_from_hc: true
     build:
       context: .
-    volumes:
-      - .:/app
   web:
     build:
       context: .
