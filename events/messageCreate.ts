@@ -21,7 +21,6 @@ import {
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { Context } from "../utils/contextBuilder";
 import { database, type ConversationMessage } from "../utils/database";
-import { escapeMentions } from "../utils/escapeMentions";
 import { logger } from "../utils/logger";
 
 export default {
@@ -136,9 +135,7 @@ export default {
         }
 
         const replyOptions: any = {
-          content: response.components
-            ? undefined
-            : escapeMentions(trimmedResponse),
+          content: response.components ? undefined : trimmedResponse,
         };
 
         // Add Components V2 if we have tool calls
