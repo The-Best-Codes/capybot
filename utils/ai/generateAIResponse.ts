@@ -97,7 +97,10 @@ export async function generateAIResponse({
     if (!aiResponse || !aiResponse.parts || aiResponse.parts.length === 0) {
       logger.log("No response parts from AI");
       logger.verbose("AI response: ", response);
-      return { text: "Error: No response from AI", responseId };
+      return {
+        text: "Looks like I'm getting too popular... wait a bit and message me again. I can't respond right now :(",
+        responseId,
+      };
     }
 
     const aiPart = aiResponse.parts[0];
@@ -243,7 +246,9 @@ export async function generateAIResponse({
   }
 
   return {
-    text: finalResponse || "Error: No response from AI",
+    text:
+      finalResponse ||
+      "Looks like I'm getting too popular... wait a bit and message me again. I can't respond right now :(",
     components: components.length > 0 ? components : undefined,
     responseId,
   };
