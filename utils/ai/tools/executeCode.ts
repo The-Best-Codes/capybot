@@ -25,13 +25,34 @@ async function executeCodeFn({ prompt }: { prompt: string }): Promise<{
     };
 
     const result = await genAI.models.generateContent(request);
-    const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!responseText) {
+    if (!result.candidates || result.candidates.length === 0) {
       return {
         success: false,
         message: "No response from the AI model.",
       };
+    }
+
+    const parts = result.candidates[0].content?.parts;
+
+    if (!parts || parts.length === 0) {
+      return {
+        success: false,
+        message: "No content parts in the response.",
+      };
+    }
+
+    let responseText = "";
+    for (const part of parts) {
+      if (part.text) {
+        responseText += part.text;
+      }
+      if (part.executableCode) {
+        responseText += `\nCode: ${part.executableCode.code}\nLanguage: ${part.executableCode.language}`;
+      }
+      if (part.codeExecutionResult) {
+        responseText += `\nExecution Outcome: ${part.codeExecutionResult.outcome}\nOutput: ${part.codeExecutionResult.output}`;
+      }
     }
 
     return {
