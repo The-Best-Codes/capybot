@@ -1,7 +1,7 @@
 {
   "name": "discraft-bot",
   "private": true,
-  "version": "0.0.0-beta.27",
+  "version": "0.0.0-beta.28",
   "description": "Bot created with discraft",
   "module": "index.ts",
   "type": "module",
@@ -28,5 +28,5 @@
     "isolated-vm": "^6.0.1",
     "sqlite3": "^5.1.7"
   },
-  "packageManager": "bun@1.2.19"
+  "packageManager": "bun@1.2.20"
 }
