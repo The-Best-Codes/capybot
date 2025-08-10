@@ -4,10 +4,10 @@ import { logger } from "../../logger";
 import type { ToolDefinition } from "./types";
 
 async function browseUrlFn({
-  urls,
+  url,
   prompt,
 }: {
-  urls: string[];
+  url: string;
   prompt: string;
 }): Promise<{
   success: boolean;
@@ -26,9 +26,7 @@ async function browseUrlFn({
 
     const request: GenerateContentParameters = {
       model: process.env.GEMINI_BROWSE_MODEL || "gemini-2.0-flash",
-      contents: [
-        { parts: [{ text: `${prompt}\n\n[URLs: ${urls.join(", ")}]` }] },
-      ],
+      contents: [{ parts: [{ text: `${prompt}\n\n[URLs:\n${url}]` }] }],
       config,
     };
 
@@ -62,13 +60,9 @@ export const browseUrl: ToolDefinition = {
   parameters: {
     type: Type.OBJECT,
     properties: {
-      urls: {
-        type: Type.ARRAY,
-        description: "A list of URLs to browse.",
-        items: {
-          type: Type.STRING,
-          description: "A URL to browse.",
-        },
+      url: {
+        type: Type.STRING,
+        description: "A URL to browse.",
       },
       prompt: {
         type: Type.STRING,
@@ -76,7 +70,7 @@ export const browseUrl: ToolDefinition = {
           "A detailed prompt describing what information to browse for overall. Be specific about the type of analysis required (e.g., in-depth analysis, general outline, key points, basic summary). This should be provided by you, the model, and not the user unless they specifically request it.",
       },
     },
-    required: ["urls", "prompt"],
+    required: ["url", "prompt"],
   },
   function: browseUrlFn,
 };
