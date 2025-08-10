@@ -48,7 +48,7 @@ const SERVER_ATTRIBUTES = [
 type ServerAttribute = (typeof SERVER_ATTRIBUTES)[number];
 
 export const getServerInfo: ToolDefinition = {
-  name: "get_server_info",
+  name: "tool_getServerInfo",
   description: "Retrieves information about the Discord server/guild",
   parameters: {
     type: Type.OBJECT,

@@ -64,7 +64,7 @@ async function executeJsCodeFn({ code }: { code: string }): Promise<{
 }
 
 export const executeJsCode: ToolDefinition = {
-  name: "execute_js_code",
+  name: "tool_executeJsCode",
   description:
     "Executes arbitrary JavaScript code in a secure sandbox using V8 isolates. Useful for calculations, data processing, and simple logic execution.",
   parameters: {
