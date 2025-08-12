@@ -1,10 +1,4 @@
 import { FunctionCallingConfigMode, type Content } from "@google/genai";
-import {
-  ContainerBuilder,
-  SeparatorBuilder,
-  SeparatorSpacingSize,
-  TextDisplayBuilder,
-} from "discord.js";
 import { genAI } from "../../clients/googleAi";
 import { database, type AIResponsePart } from "../database";
 import { logger } from "../logger";
@@ -34,7 +28,6 @@ async function executeTool(
 
 export interface AIResponse {
   text: string;
-  components?: any[];
   responseId: string;
 }
 
@@ -57,9 +50,7 @@ export async function generateAIResponse({
   let steps = 0;
   let finalResponse = "";
   const responseId = `${responseMessageId}_${Date.now()}`;
-  const components: any[] = [];
   let partOrder = 0;
-  let lastWasToolCall = false;
 
   if (modelName === "") {
     logger.error("Gemini AI Model is not provided");
@@ -122,26 +113,6 @@ export async function generateAIResponse({
       };
       await database.saveAIResponsePart(toolCallPart);
 
-      // Add separator before tool call if the last action was also a tool call
-      if (lastWasToolCall) {
-        components.push(
-          new SeparatorBuilder()
-            .setSpacing(SeparatorSpacingSize.Large)
-            .setDivider(true),
-        );
-      }
-
-      // Add tool call component
-      components.push(
-        new ContainerBuilder().addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(
-            `Used tool \`${functionCall.name}\`.`,
-          ),
-        ),
-      );
-
-      lastWasToolCall = true;
-
       try {
         const toolResult = await executeTool(
           functionCall.name,
@@ -183,7 +154,6 @@ export async function generateAIResponse({
       } catch (error: any) {
         logger.error(`Error executing tool ${functionCall.name}:`, error);
         finalResponse = `Error: Issue executing tool ${functionCall.name}: ${error.message}`;
-        lastWasToolCall = false;
         break;
       }
     } else if (aiPart.text) {
@@ -200,8 +170,6 @@ export async function generateAIResponse({
         order: partOrder++,
       };
       await database.saveAIResponsePart(textPart);
-
-      lastWasToolCall = false;
       break;
     } else if (aiPart.thought !== undefined) {
       logger.verbose("AI returned a thinking response");
@@ -212,7 +180,6 @@ export async function generateAIResponse({
 
       if (steps >= MAX_TOOL_CALL_STEPS) {
         finalResponse = aiPart.text || "Warning: The AI is still thinking...";
-        lastWasToolCall = false;
       }
     } else {
       logger.verbose(
@@ -220,7 +187,6 @@ export async function generateAIResponse({
       );
       logger.verbose("Response part:", JSON.stringify(aiPart));
       finalResponse = "Error: Invalid AI response format";
-      lastWasToolCall = false;
       break;
     }
   }
@@ -228,28 +194,12 @@ export async function generateAIResponse({
   if (steps >= MAX_TOOL_CALL_STEPS && !finalResponse) {
     finalResponse =
       "Reached maximum tool call steps. Could not complete the request.";
-    lastWasToolCall = false;
-  }
-
-  // Add separator before final text if we have components and the last action was a tool call
-  if (components.length > 0 && finalResponse && lastWasToolCall) {
-    components.push(
-      new SeparatorBuilder()
-        .setSpacing(SeparatorSpacingSize.Large)
-        .setDivider(true),
-    );
-  }
-
-  // Add final text response as component if we have other components
-  if (components.length > 0 && finalResponse) {
-    components.push(new TextDisplayBuilder().setContent(finalResponse));
   }
 
   return {
     text:
       finalResponse ||
       "Looks like I'm getting too popular... wait a bit and message me again. I can't respond right now :(",
-    components: components.length > 0 ? components : undefined,
     responseId,
   };
 }

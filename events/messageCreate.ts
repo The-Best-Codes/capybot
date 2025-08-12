@@ -3,7 +3,6 @@ import {
   Client,
   Events,
   Message,
-  MessageFlags,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
 import { buildConversationHistory } from "../utils/ai/context/history";
@@ -135,14 +134,8 @@ export default {
         }
 
         const replyOptions: any = {
-          content: response.components ? undefined : trimmedResponse,
+          content: trimmedResponse,
         };
-
-        // Add Components V2 if we have tool calls
-        if (response.components && response.components.length > 0) {
-          replyOptions.components = response.components;
-          replyOptions.flags = MessageFlags.IsComponentsV2;
-        }
 
         replyOptions.allowedMentions = {
           parse: [],
