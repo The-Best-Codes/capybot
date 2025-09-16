@@ -1,6 +1,7 @@
 import { addReaction } from "./addReaction";
 import { browseUrl } from "./browseUrl";
 import { executeCode } from "./executeCode";
+import { generateImage } from "./generateImage";
 import { getAttachmentInfo } from "./getAttachmentInfo";
 import { getServerInfo } from "./getServerInfo";
 import { getUserInfo } from "./getUserInfo";
@@ -20,6 +21,7 @@ export const tools = {
   [executeCode.name]: executeCode,
   [searchGoogle.name]: searchGoogle,
   [browseUrl.name]: browseUrl,
+  [generateImage.name]: generateImage,
 };
 
 export type ToolName = keyof typeof tools;
