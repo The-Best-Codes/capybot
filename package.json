@@ -19,7 +19,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@google/genai": "^1.17.0",
+    "@google/genai": "^1.19.0",
     "consola": "^3.4.2",
     "discord.js": "^14.22.1",
     "dotenv": "^17.2.2",
