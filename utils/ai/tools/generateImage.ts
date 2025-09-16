@@ -32,13 +32,8 @@ async function generateImageFn({
       };
     }
 
-    const imageBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(imageBuffer).toString("base64");
-    const mimeType = response.headers.get("content-type") || "image/png";
-
     return {
       success: true,
-      images: [{ base64, mimeType }],
       message: `Image URL: ${imageUrl}`,
     };
   } catch (error: any) {
