@@ -20,7 +20,7 @@ registerEvents(client)
     logger.verbose(err);
   })
   .finally(() => {
-    client.on("ready", async () => {
+    client.on("clientReady", async () => {
       logger.success("Client logged in.");
       try {
         await registerCommands(client);
