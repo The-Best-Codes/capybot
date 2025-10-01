@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { database } from "../utils/database";
 import { logger } from "../utils/logger";
 
@@ -19,7 +19,7 @@ export default {
         .setRequired(false),
     ),
 
-  handler: async (interaction: any) => {
+  handler: async (interaction: ChatInputCommandInteraction) => {
     if (!interaction.guild) {
       return interaction.reply({
         content: "This command can only be used in a server.",

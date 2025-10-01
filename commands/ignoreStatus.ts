@@ -1,4 +1,8 @@
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  SlashCommandBuilder,
+} from "discord.js";
 import { database, type IgnoreRule } from "../utils/database";
 import { logger } from "../utils/logger";
 
@@ -7,7 +11,7 @@ export default {
     .setName("ignore-status")
     .setDescription("View current ignore rules for this server."),
 
-  handler: async (interaction: any) => {
+  handler: async (interaction: ChatInputCommandInteraction) => {
     if (!interaction.guild) {
       return interaction.reply({
         content: "This command can only be used in a server.",
