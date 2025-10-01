@@ -171,7 +171,24 @@ export default {
           logger.log(
             "AI response contains ignore phrase, skipping Discord reply.",
           );
-          return; // Don't send anything
+
+          // Cleanup any AI response parts created with tempResponseId
+          const tempParts =
+            await database.getAIResponsePartsByMessageId(tempResponseId);
+          if (tempParts.length > 0) {
+            try {
+              await database.deleteAIResponsePartsByMessageId(tempResponseId);
+              logger.log(
+                `Successfully cleaned up ${tempParts.length} AI response parts for temporary response ID: ${tempResponseId}`,
+              );
+            } catch (cleanupError) {
+              logger.error(
+                `Failed to clean up ${tempParts.length} AI response parts for temporary response ID ${tempResponseId}: ${cleanupError}`,
+              );
+            }
+          }
+
+          return;
         }
 
         let trimmedResponse;

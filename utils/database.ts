@@ -126,6 +126,9 @@ class Database {
       this.db.run(
         "CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON conversation_messages(timestamp)",
       );
+      this.db.run(
+        "CREATE INDEX IF NOT EXISTS idx_ignore_rules_guild_id ON ignore_rules(guild_id)",
+      );
     });
   }
 
@@ -214,6 +217,29 @@ class Database {
               order: row.order_num,
             }));
             resolve(parts);
+          }
+        },
+      );
+    });
+  }
+
+  deleteAIResponsePartsByMessageId(messageId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        "DELETE FROM ai_response_parts WHERE message_id = ?",
+        [messageId],
+        (err) => {
+          if (err) {
+            logger.error(
+              `Error deleting AI response parts for messageId ${messageId}:`,
+              err,
+            );
+            reject(err);
+          } else {
+            logger.info(
+              `Successfully deleted AI response parts for messageId: ${messageId}`,
+            );
+            resolve();
           }
         },
       );
