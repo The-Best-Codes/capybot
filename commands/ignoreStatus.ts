@@ -43,9 +43,13 @@ export default {
             description = `Ignoring user <@${rule.userId}> server-wide.`;
           } else if (rule.channelId) {
             description = `Ignoring channel <#${rule.channelId}> server-wide.`;
+          } else {
+            description = "Invalid rule (no target specified).";
           }
         } else if (rule.scope === "channel_specific") {
           description = `Ignoring user <@${rule.userId}> in channel <#${rule.channelId}>.`;
+        } else {
+          description = "Unknown rule type.";
         }
         embed.addFields({ name: "Rule", value: description, inline: false });
       }
