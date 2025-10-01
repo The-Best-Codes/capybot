@@ -19,7 +19,8 @@ export default {
         .setRequired(false),
     ),
 
-  handler: async (interaction: ChatInputCommandInteraction) => {
+  async execute(data: { interaction: ChatInputCommandInteraction }) {
+    const interaction = data.interaction;
     if (!interaction.guild) {
       return interaction.reply({
         content: "This command can only be used in a server.",
