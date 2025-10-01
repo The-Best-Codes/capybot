@@ -1,7 +1,7 @@
 {
   "name": "discraft-bot",
   "private": true,
-  "version": "0.0.0-beta.33",
+  "version": "0.0.0-beta.34",
   "description": "Bot created with discraft",
   "module": "index.ts",
   "type": "module",
@@ -16,13 +16,13 @@
   },
   "devDependencies": {
     "discraft": "^1.7.8",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@google/genai": "^1.19.0",
+    "@google/genai": "^1.21.0",
     "consola": "^3.4.2",
     "discord.js": "^14.22.1",
-    "dotenv": "^17.2.2",
+    "dotenv": "^17.2.3",
     "fastest-levenshtein": "^1.0.16",
     "sqlite3": "^5.1.7"
   },

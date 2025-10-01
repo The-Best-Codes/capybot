@@ -40,6 +40,15 @@ export interface ConversationMessage {
   aiResponseParts?: AIResponsePart[];
 }
 
+export interface IgnoreRule {
+  id?: number;
+  guildId: string;
+  userId?: string;
+  channelId?: string;
+  scope: "server" | "channel_specific";
+  createdAt?: string;
+}
+
 class Database {
   private db: sqlite3.Database;
   private dbPath: string;
@@ -79,20 +88,33 @@ class Database {
     `;
 
     const createConversationMessagesTable = `
-      CREATE TABLE IF NOT EXISTS conversation_messages (
-        id TEXT PRIMARY KEY,
-        channel_id TEXT NOT NULL,
-        author_id TEXT NOT NULL,
-        content TEXT,
-        timestamp TEXT NOT NULL,
-        is_bot INTEGER NOT NULL,
-        reply_to_message_id TEXT
-      )
-    `;
+       CREATE TABLE IF NOT EXISTS conversation_messages (
+         id TEXT PRIMARY KEY,
+         channel_id TEXT NOT NULL,
+         author_id TEXT NOT NULL,
+         content TEXT,
+         timestamp TEXT NOT NULL,
+         is_bot INTEGER NOT NULL,
+         reply_to_message_id TEXT
+       )
+     `;
+
+    const createIgnoreRulesTable = `
+       CREATE TABLE IF NOT EXISTS ignore_rules (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         guild_id TEXT NOT NULL,
+         user_id TEXT,
+         channel_id TEXT,
+         scope TEXT NOT NULL CHECK (scope IN ('server', 'channel_specific')),
+         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+         UNIQUE(guild_id, user_id, channel_id, scope)
+       )
+     `;
 
     this.db.serialize(() => {
       this.db.run(createAIResponsePartsTable);
       this.db.run(createConversationMessagesTable);
+      this.db.run(createIgnoreRulesTable);
 
       // Create indexes for better performance
       this.db.run(
@@ -103,6 +125,9 @@ class Database {
       );
       this.db.run(
         "CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON conversation_messages(timestamp)",
+      );
+      this.db.run(
+        "CREATE INDEX IF NOT EXISTS idx_ignore_rules_guild_id ON ignore_rules(guild_id)",
       );
     });
   }
@@ -192,6 +217,29 @@ class Database {
               order: row.order_num,
             }));
             resolve(parts);
+          }
+        },
+      );
+    });
+  }
+
+  deleteAIResponsePartsByMessageId(messageId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        "DELETE FROM ai_response_parts WHERE message_id = ?",
+        [messageId],
+        (err) => {
+          if (err) {
+            logger.error(
+              `Error deleting AI response parts for messageId ${messageId}:`,
+              err,
+            );
+            reject(err);
+          } else {
+            logger.info(
+              `Successfully deleted AI response parts for messageId: ${messageId}`,
+            );
+            resolve();
           }
         },
       );
@@ -328,6 +376,89 @@ class Database {
             resolve();
           },
         );
+      });
+    });
+  }
+
+  // Ignore Rules methods
+  saveIgnoreRule(rule: IgnoreRule): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const stmt = this.db.prepare(`
+         INSERT OR REPLACE INTO ignore_rules (guild_id, user_id, channel_id, scope)
+         VALUES (?, ?, ?, ?)
+       `);
+
+      stmt.run(
+        [rule.guildId, rule.userId || null, rule.channelId || null, rule.scope],
+        (err) => {
+          if (err) {
+            logger.error("Error saving ignore rule:", err);
+            reject(err);
+          } else {
+            resolve();
+          }
+        },
+      );
+
+      stmt.finalize();
+    });
+  }
+
+  getIgnoreRulesByGuild(guildId: string): Promise<IgnoreRule[]> {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        "SELECT * FROM ignore_rules WHERE guild_id = ? ORDER BY created_at DESC",
+        [guildId],
+        (err, rows: any[]) => {
+          if (err) {
+            logger.error("Error getting ignore rules:", err);
+            reject(err);
+          } else {
+            const rules: IgnoreRule[] = rows.map((row) => ({
+              id: row.id,
+              guildId: row.guild_id,
+              userId: row.user_id,
+              channelId: row.channel_id,
+              scope: row.scope,
+              createdAt: row.created_at,
+            }));
+            resolve(rules);
+          }
+        },
+      );
+    });
+  }
+
+  deleteIgnoreRule(
+    guildId: string,
+    userId?: string,
+    channelId?: string,
+    scope?: string,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let query = "DELETE FROM ignore_rules WHERE guild_id = ?";
+      const params: any[] = [guildId];
+
+      if (userId) {
+        query += " AND user_id = ?";
+        params.push(userId);
+      }
+      if (channelId) {
+        query += " AND channel_id = ?";
+        params.push(channelId);
+      }
+      if (scope) {
+        query += " AND scope = ?";
+        params.push(scope);
+      }
+
+      this.db.run(query, params, (err) => {
+        if (err) {
+          logger.error("Error deleting ignore rule:", err);
+          reject(err);
+        } else {
+          resolve();
+        }
       });
     });
   }
