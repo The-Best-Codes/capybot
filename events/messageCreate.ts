@@ -69,36 +69,81 @@ export default {
       return;
     }
 
-    const mentionsBot = message.mentions.users.has(client.user?.id || "");
-    const mentionsEveryone = message.mentions.everyone;
-    const shouldRespond = mentionsBot || mentionsEveryone;
-
-    // Only respond to messages mentioning the bot or everyone.
-    // This implicitly limits responses to guild channels.
-    if (!shouldRespond) return;
+    const userMessage: ConversationMessage = {
+      id: message.id,
+      channelId: message.channel.id,
+      authorId: message.author.id,
+      content: message.content,
+      timestamp: message.createdAt.toISOString(),
+      isBot: false,
+      replyToMessageId: message.reference?.messageId,
+    };
 
     try {
-      await message.channel.sendTyping();
+      await database.saveConversationMessage(userMessage);
+    } catch (error) {
+      logger.error(`Failed to save user message to database: ${error}`);
+    }
 
-      // Save the user message to database first
-      const userMessage: ConversationMessage = {
-        id: message.id,
-        channelId: message.channel.id,
-        authorId: message.author.id,
-        content: message.content,
-        timestamp: message.createdAt.toISOString(),
-        isBot: false,
-        replyToMessageId: message.reference?.messageId,
-      };
+    const mentionsBot = message.mentions.users.has(client.user?.id || "");
+    const mentionsEveryone = message.mentions.everyone;
 
-      try {
-        await database.saveConversationMessage(userMessage);
-      } catch (error) {
-        logger.error(`Failed to save user message to database: ${error}`);
-        // Continue execution to allow bot response even if saving fails
+    let isReplyToBot = false;
+    if (message.reference?.messageId && !mentionsBot) {
+      const cachedRef = await database.getConversationMessage(
+        message.reference.messageId,
+      );
+      if (cachedRef && cachedRef.authorId === client.user?.id) {
+        isReplyToBot = true;
+      } else if (!cachedRef) {
+        try {
+          const fetchedRef = await message.fetchReference();
+          if (fetchedRef.author.id === client.user?.id) isReplyToBot = true;
+        } catch (e) {}
+      }
+    }
+
+    const isDirectInteraction = mentionsBot || mentionsEveryone || isReplyToBot;
+
+    const overhearRate = process.env.AI_OVERHEAR_RATE
+      ? parseFloat(process.env.AI_OVERHEAR_RATE)
+      : 0.02;
+    const isOverhearing = !isDirectInteraction && Math.random() < overhearRate;
+
+    if (!isDirectInteraction && !isOverhearing) {
+      return;
+    }
+
+    try {
+      if (isDirectInteraction) {
+        await message.channel.sendTyping();
       }
 
       const context = new Context();
+
+      const triggerContext = context
+        .add("processing-trigger")
+        .desc("Indicates why the AI is receiving this message.");
+
+      if (isDirectInteraction) {
+        triggerContext
+          .add("type", "direct_interaction")
+          .desc(
+            "User explicitly mentioned you or replied to you. You should respond.",
+          );
+        logger.log(
+          `Processing direct interaction in ${message.guild?.name || "DM"}.`,
+        );
+      } else {
+        triggerContext
+          .add("type", "overhearing")
+          .desc(
+            "You are 'overhearing' this. Only respond if highly relevant/funny. Otherwise use ignore phrase.",
+          );
+        logger.log(
+          `Overhearing message (lucky ${overhearRate * 100}%) in ${message.guild?.name || "DM"}.`,
+        );
+      }
 
       const allMentionedEntities: CollectedEntities = {
         users: new Map(),
@@ -109,9 +154,6 @@ export default {
       addUserToCollection(allMentionedEntities, message.author, message.member);
 
       if (message.guild) {
-        logger.log(
-          `Responding to message ${message.id} in guild ${message.guild?.name}.`,
-        );
         buildServerContext(context, message);
         buildChannelContext(context, message);
       }
@@ -167,9 +209,11 @@ export default {
       if (response.text) {
         const ignorePhrase =
           process.env.IGNORE_RESPONSE_PHRASE || "~!IGNORE_RESPONSE~|";
+
+        // Check if AI decided to ignore
         if (response.text.includes(ignorePhrase)) {
           logger.log(
-            "AI response contains ignore phrase, skipping Discord reply.",
+            `AI chose to ignore message (${isDirectInteraction ? "Direct" : "Overheard"}).`,
           );
 
           // Cleanup any AI response parts created with tempResponseId
@@ -207,7 +251,9 @@ export default {
           repliedUser: false,
         };
 
-        const botMessage = await message.reply(replyOptions);
+        const botMessage = isDirectInteraction
+          ? await message.reply(replyOptions)
+          : await message.channel.send(replyOptions);
 
         // Now save the bot message to database with the real message ID
         const botConversationMessage: ConversationMessage = {
@@ -217,7 +263,8 @@ export default {
           content: trimmedResponse,
           timestamp: botMessage.createdAt.toISOString(),
           isBot: true,
-          replyToMessageId: message.id,
+          // Only link reply if we actually used reply()
+          replyToMessageId: isDirectInteraction ? message.id : undefined,
         };
         await database.saveConversationMessage(botConversationMessage);
 
@@ -225,11 +272,8 @@ export default {
         const tempParts =
           await database.getAIResponsePartsByMessageId(tempResponseId);
 
-        // Batch DB writes for efficiency - wrap in transaction
         if (tempParts.length > 0) {
           try {
-            // Note: For a proper implementation, we'd want to add a bulk update method to the database class
-            // For now, we'll keep the individual updates but add a comment about the improvement
             for (const part of tempParts) {
               const updatedPart = { ...part, messageId: botMessage.id };
               await database.saveAIResponsePart(updatedPart);
@@ -240,24 +284,16 @@ export default {
         }
       } else {
         logger.error("AI response text part is empty.");
-        /* await message.reply({
-          content: "An error occurred: `Error: AI response text part is empty.`",
-          allowedMentions: {
-            parse: [],
-            repliedUser: false,
-          },
-        }); */
       }
     } catch (error) {
       logger.error(`Error generating AI response: ${error}`);
-      await message.reply({
-        content:
-          "Looks like I'm getting too popular... wait a bit and message me again. I can't respond right now :(",
-        allowedMentions: {
-          parse: [],
-          repliedUser: true,
-        },
-      });
+      if (isDirectInteraction) {
+        await message.reply({
+          content:
+            "Looks like I'm getting too popular... wait a bit and message me again. I can't respond right now :(",
+          allowedMentions: { parse: [], repliedUser: true },
+        });
+      }
     }
   },
 };
