@@ -19,8 +19,41 @@ import {
 } from "../utils/ai/context/main";
 import { generateAIResponse } from "../utils/ai/generateAIResponse";
 import { Context } from "../utils/contextBuilder";
-import { database, type ConversationMessage } from "../utils/database";
+import {
+  database,
+  type ConversationMessage,
+  type IgnoreRule,
+} from "../utils/database";
 import { logger } from "../utils/logger";
+
+async function shouldIgnoreMessage(
+  message: OmitPartialGroupDMChannel<Message<boolean>>,
+): Promise<boolean> {
+  if (!message.guild) return false; // Only apply in guilds
+
+  const rules: IgnoreRule[] = await database.getIgnoreRulesByGuild(
+    message.guild.id,
+  );
+
+  for (const rule of rules) {
+    if (rule.scope === "server") {
+      if (rule.channelId && rule.channelId === message.channel.id) {
+        return true; // Ignore channel server-wide
+      }
+      if (rule.userId && rule.userId === message.author.id) {
+        return true; // Ignore user server-wide
+      }
+    } else if (rule.scope === "channel_specific") {
+      if (
+        rule.userId === message.author.id &&
+        rule.channelId === message.channel.id
+      ) {
+        return true; // Ignore user in specific channel
+      }
+    }
+  }
+  return false;
+}
 
 export default {
   event: Events.MessageCreate,
@@ -29,6 +62,12 @@ export default {
     message: OmitPartialGroupDMChannel<Message<boolean>>,
   ) => {
     if (message.author.bot) return;
+
+    // Check if message should be ignored
+    if (await shouldIgnoreMessage(message)) {
+      logger.log(`Ignoring message ${message.id} due to ignore rules.`);
+      return;
+    }
 
     const mentionsBot = message.mentions.users.has(client.user?.id || "");
     const mentionsEveryone = message.mentions.everyone;
@@ -126,6 +165,15 @@ export default {
       });
 
       if (response.text) {
+        const ignorePhrase =
+          process.env.IGNORE_RESPONSE_PHRASE || "~!IGNORE_RESPONSE~|";
+        if (response.text.includes(ignorePhrase)) {
+          logger.log(
+            "AI response contains ignore phrase, skipping Discord reply.",
+          );
+          return; // Don't send anything
+        }
+
         let trimmedResponse;
         if (response.text.length > 1900) {
           trimmedResponse = `${response.text.slice(0, 1900)}\n[Truncated to less than 2000 characters]`;
