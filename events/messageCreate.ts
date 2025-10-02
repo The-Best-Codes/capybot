@@ -103,7 +103,8 @@ export default {
       }
     }
 
-    const isDirectInteraction = mentionsBot || mentionsEveryone || isReplyToBot;
+    const isDirectInteraction =
+      !message.guild || mentionsBot || mentionsEveryone || isReplyToBot;
 
     const overhearRate = process.env.AI_OVERHEAR_RATE
       ? parseFloat(process.env.AI_OVERHEAR_RATE)
