@@ -264,8 +264,7 @@ export default {
           content: trimmedResponse,
           timestamp: botMessage.createdAt.toISOString(),
           isBot: true,
-          // Only link reply if we actually used reply()
-          replyToMessageId: isDirectInteraction ? message.id : undefined,
+          replyToMessageId: message.id,
         };
         await database.saveConversationMessage(botConversationMessage);
 
