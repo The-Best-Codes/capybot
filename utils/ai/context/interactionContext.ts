@@ -158,7 +158,9 @@ function buildMessageContextMenuContext(
     const attachmentsContext = messageContext.add("attachments");
     let attachmentIndex = 0;
     targetMessage.attachments.forEach((attachment) => {
-      const attachmentContext = attachmentsContext.add(`attachment-${attachmentIndex}`);
+      const attachmentContext = attachmentsContext.add(
+        `attachment-${attachmentIndex}`,
+      );
       attachmentContext.add("name", attachment.name || "unknown");
       attachmentContext.add("size", attachment.size.toString());
       attachmentContext.add(

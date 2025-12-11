@@ -63,6 +63,16 @@ export default {
   ) => {
     if (message.author.bot) return;
 
+    // Handle DMs
+    if (!message.guild) {
+      await message.reply({
+        content:
+          "DMs are disabled for this bot. Visit https://bestcodes.dev/contact to appeal this decision.",
+        allowedMentions: { parse: [], repliedUser: true },
+      });
+      return;
+    }
+
     // Check if message should be ignored
     if (await shouldIgnoreMessage(message)) {
       logger.log(`Ignoring message ${message.id} due to ignore rules.`);
