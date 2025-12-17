@@ -1,0 +1,23 @@
+{
+  "name": "capybot",
+  "private": true,
+  "version": "0.1.0-beta.0",
+  "description": "CapyBot is CapyBot. He's indescribable.",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "discraft start",
+    "build": "discraft build",
+    "dev": "discraft dev",
+    "fmt": "prettier --write ."
+  },
+  "devDependencies": {
+    "discraft": "^1.7.11",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "consola": "^3.4.2",
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.2.3"
+  }
+}
