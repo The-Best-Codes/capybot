@@ -1,1 +1,0 @@
-{"root":["./index.ts","./clients/discord.ts","./commands/longcommand.ts","./commands/messageinfo.ts","./commands/ping.ts","./commands/userinfo.ts","./dist/index.js","./events/error.ts","./events/messageCreate.ts","./events/ready.ts","./utils/logger.ts"],"version":"5.9.3"}

@@ -6,3 +6,5 @@ yarn.lock
 pnpm-lock.yaml
 .env
 .discraft
+
+*.tsbuildinfo
