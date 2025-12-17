@@ -15,8 +15,6 @@ export default {
         activities: [
           {
             name: "Discraft",
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore Discord.js does not have this property, but it is valid
             state: "Created with Discraft",
             type: ActivityType.Custom,
           },
