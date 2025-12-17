@@ -16,6 +16,8 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.49",
+    "ai": "^5.0.115",
     "consola": "^3.4.2",
     "discord.js": "^14.25.1",
     "dotenv": "^17.2.3"
