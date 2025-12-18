@@ -17,8 +17,7 @@ class ContextBuilder {
     username: string;
     display_name: string;
     nickname?: string;
-    discriminator: string;
-    bot: boolean;
+    bot?: boolean;
   }) {
     this.sections.set("user", user);
     return this;
@@ -163,9 +162,7 @@ export async function buildContextXML(
       .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
       .slice(0, -1)
       .map((msg) => ({
-        author: msg.author.bot
-          ? `${msg.author.username} [BOT]`
-          : msg.author.username,
+        author: msg.author.username,
         content: msg.content,
         timestamp: msg.createdTimestamp,
         formatted_time: formatTimestamp(msg.createdTimestamp),
@@ -206,8 +203,7 @@ export async function buildContextXML(
       username: author.username,
       display_name: author.displayName,
       nickname: authorMember?.nickname || undefined,
-      discriminator: author.discriminator,
-      bot: author.bot,
+      bot: author.bot || undefined,
     })
     .addMessage({
       id: message.id,
