@@ -1,4 +1,8 @@
-import { Message, type OmitPartialGroupDMChannel } from "discord.js";
+import {
+  ChannelType,
+  Message,
+  type OmitPartialGroupDMChannel,
+} from "discord.js";
 import { ContextDictionary } from "./dictionary";
 import { formatTimestamp, serializeToXML } from "./xml";
 
@@ -15,6 +19,13 @@ async function fetchHistory(
 
     return sorted.map((msg) => {
       dictionary.registerUser(msg.member || msg.author);
+
+      msg.mentions.users.forEach((u) => dictionary.registerUser(u));
+      msg.mentions.channels.forEach((c) =>
+        dictionary.registerChannel(c as any),
+      );
+      msg.mentions.roles.forEach((r) => dictionary.registerRole(r));
+
       return {
         id: msg.id,
         author_id: msg.author.id,
@@ -35,7 +46,7 @@ export async function buildContextXML(
   const { guild, channel, author } = message;
 
   dictionary.registerUser(message.member || author);
-  dictionary.registerChannel(channel);
+  // dictionary.registerChannel(channel);
 
   message.mentions.users.forEach((u) => dictionary.registerUser(u));
   message.mentions.channels.forEach((c) =>
@@ -55,6 +66,13 @@ export async function buildContextXML(
       }
     : null;
 
+  const currentChannelInfo = {
+    id: channel.id,
+    name: "name" in channel ? channel.name : "dm-channel",
+    type: ChannelType[channel.type] || "Unknown",
+    topic: "topic" in channel ? channel.topic : null,
+  };
+
   const currentMessage = {
     id: message.id,
     author_id: author.id,
@@ -67,6 +85,7 @@ export async function buildContextXML(
   const dictionaryXML = dictionary.getXML();
 
   const guildXML = serializeToXML("current_guild", guildInfo);
+  const channelXML = serializeToXML("current_channel", currentChannelInfo);
 
   const historyXML =
     history.length > 0
@@ -91,5 +110,5 @@ export async function buildContextXML(
     `</current_message>`,
   ].join("");
 
-  return `<root>${dictionaryXML}${guildXML}${historyXML}${messageXML}</root>`;
+  return `<root>${dictionaryXML}${guildXML}${channelXML}${historyXML}${messageXML}</root>`;
 }

@@ -1,4 +1,5 @@
 import {
+  ChannelType,
   GuildMember,
   Role,
   User,
@@ -58,7 +59,7 @@ export class ContextDictionary {
       xml += "<channels>";
       for (const [id, channel] of this.channels) {
         const name = "name" in channel ? channel.name : "dm-channel";
-        const type = "type" in channel ? String(channel.type) : "unknown";
+        const type = "type" in channel ? ChannelType[channel.type] : "Unknown";
 
         const content = [
           serializeToXML("name", name),
