@@ -1,4 +1,5 @@
 import { Message, type OmitPartialGroupDMChannel } from "discord.js";
+import prettier from "prettier";
 
 export async function buildContextXML(
   message: OmitPartialGroupDMChannel<Message<boolean>>,
@@ -19,18 +20,27 @@ export async function buildContextXML(
         const msgAuthor = msg.author.bot
           ? `${msg.author.username} [BOT]`
           : msg.author.username;
-        return `<message>
-  <author>${msgAuthor}</author>
-  <content>${msg.content}</content>
-  <timestamp>${msg.createdTimestamp}</timestamp>
-</message>`;
+        return `    <message>
+      <author>${msgAuthor}</author>
+      <content>${msg.content}</content>
+      <timestamp>${msg.createdTimestamp}</timestamp>
+    </message>`;
       })
       .join("\n");
   } catch (error) {
-    messageHistory = "<message>Unable to fetch message history</message>";
+    messageHistory =
+      "    <message>\n      <error>Unable to fetch message history</error>\n    </message>";
   }
 
-  const context = `<context>
+  const guildSection = guild
+    ? `  <guild>
+    <id>${guild.id}</id>
+    <name>${guild.name}</name>
+    <member_count>${guild.memberCount}</member_count>
+  </guild>`
+    : "";
+
+  const rawXML = `<context>
   <user>
     <id>${author.id}</id>
     <username>${author.username}</username>
@@ -49,19 +59,15 @@ export async function buildContextXML(
     <name>${channel.isDMBased() ? "DM" : channel.name}</name>
     <type>${channel.isDMBased() ? "dm" : "guild"}</type>
   </channel>
-  ${
-    guild
-      ? `<guild>
-    <id>${guild.id}</id>
-    <name>${guild.name}</name>
-    <member_count>${guild.memberCount}</member_count>
-  </guild>`
-      : ""
-  }
+${guildSection}
   <message_history>
 ${messageHistory}
   </message_history>
 </context>`;
 
-  return context;
+  const formattedXML = await prettier.format(rawXML, {
+    parser: "html",
+  });
+
+  return formattedXML;
 }
