@@ -12,7 +12,7 @@ export default {
     client: Client,
     message: OmitPartialGroupDMChannel<Message<boolean>>,
   ) => {
-    if (message.author.bot) return; // Ignore bot messages
+    if (message.author.bot) return;
     if (message.content === "Hi, Discraft") {
       try {
         await message.reply(`Hello, ${message.author.username}!`);
