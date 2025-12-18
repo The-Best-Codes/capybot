@@ -6,6 +6,7 @@ import {
   type OmitPartialGroupDMChannel,
 } from "discord.js";
 import { globalModel } from "../clients/ai";
+import { systemInstructions } from "../utils/ai/systemPrompt";
 import { logger } from "../utils/logger";
 
 export default {
@@ -19,6 +20,7 @@ export default {
       const { text } = await generateText({
         model: globalModel,
         prompt: message.content,
+        system: systemInstructions,
       });
       await message.reply(text);
     } catch (error) {
