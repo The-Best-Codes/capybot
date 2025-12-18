@@ -1,9 +1,11 @@
+import { generateText } from "ai";
 import {
   Client,
   Events,
   Message,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
+import { globalModel } from "../clients/ai";
 import { logger } from "../utils/logger";
 
 export default {
@@ -13,12 +15,14 @@ export default {
     message: OmitPartialGroupDMChannel<Message<boolean>>,
   ) => {
     if (message.author.bot) return;
-    if (message.content === "Hi, Discraft") {
-      try {
-        await message.reply(`Hello, ${message.author.username}!`);
-      } catch (error) {
-        logger.error(`Error replying to message: ${error}`);
-      }
+    try {
+      const { text } = await generateText({
+        model: globalModel,
+        prompt: message.content,
+      });
+      await message.reply(text);
+    } catch (error) {
+      logger.error(`Error generating AI response: ${error}`);
     }
   },
 };
