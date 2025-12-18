@@ -37,7 +37,7 @@ export default {
 
     try {
       const context = await buildContextXML(message);
-      logger.log("Context XML:", context);
+      logger.debug("Context XML:", context);
 
       const prompt = `${context}\n\nUser message: ${message.content}`;
 
@@ -46,7 +46,10 @@ export default {
         prompt,
         system: systemInstructions,
       });
-      await message.reply(text);
+      await message.reply({
+        content: text,
+        allowedMentions: { repliedUser: false, parse: [] },
+      });
     } catch (error) {
       logger.error(`Error generating AI response: ${error}`);
     }
