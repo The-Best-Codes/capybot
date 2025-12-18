@@ -5,16 +5,16 @@
     "": {
       "name": "capybot",
       "dependencies": {
-        "@ai-sdk/google": "latest",
-        "ai": "latest",
-        "consola": "latest",
-        "discord.js": "latest",
-        "dotenv": "latest",
-        "prettier": "latest",
+        "@ai-sdk/google": "^2.0.49",
+        "ai": "^5.0.115",
+        "consola": "^3.4.2",
+        "discord.js": "^14.25.1",
+        "dotenv": "^17.2.3",
       },
       "devDependencies": {
-        "discraft": "latest",
-        "typescript": "latest",
+        "discraft": "^1.7.11",
+        "prettier": "^3.7.4",
+        "typescript": "^5.9.3",
       },
     },
   },
@@ -179,7 +179,7 @@
 
     "picocolors": ["picocolors@1.1.1", "", {}, ""],
 
-    "prettier": ["prettier@3.7.4", "", { "bin": "bin/prettier.cjs" }, "sha512-v6UNi1+3hSlVvv8fSaoUbggEM5VErKmmpGA7Pl3HF8V6uKY7rvClBOJlH6yNwQtfTueNkGVpOv/mtWL9L4bgRA=="],
+    "prettier": ["prettier@3.7.4", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-v6UNi1+3hSlVvv8fSaoUbggEM5VErKmmpGA7Pl3HF8V6uKY7rvClBOJlH6yNwQtfTueNkGVpOv/mtWL9L4bgRA=="],
 
     "readdirp": ["readdirp@5.0.0", "", {}, ""],
 

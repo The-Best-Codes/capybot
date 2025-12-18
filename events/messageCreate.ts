@@ -6,8 +6,8 @@ import {
   type OmitPartialGroupDMChannel,
 } from "discord.js";
 import { globalModel } from "../clients/ai";
+import { buildContextXML } from "../utils/ai/context";
 import { systemInstructions } from "../utils/ai/systemPrompt";
-import { buildContextXML } from "../utils/ai/buildContext";
 import { logger } from "../utils/logger";
 
 export default {
