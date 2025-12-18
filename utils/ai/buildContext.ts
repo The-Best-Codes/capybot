@@ -5,12 +5,18 @@ function escapeXML(str: string): string {
   return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function formatTimestamp(timestamp: number): string {
+  return new Date(timestamp).toUTCString();
+}
+
 class ContextBuilder {
   private sections: Map<string, unknown> = new Map();
 
   addUser(user: {
     id: string;
     username: string;
+    display_name: string;
+    nickname?: string;
     discriminator: string;
     bot: boolean;
   }) {
@@ -22,6 +28,7 @@ class ContextBuilder {
     id: string;
     content: string;
     timestamp: number;
+    formatted_time: string;
     mentions_bot: boolean;
     is_reply: boolean;
   }) {
@@ -42,14 +49,24 @@ class ContextBuilder {
   }
 
   addMessageHistory(
-    messages: Array<{ author: string; content: string; timestamp: number }>,
+    messages: Array<{
+      author: string;
+      content: string;
+      timestamp: number;
+      formatted_time: string;
+    }>,
   ) {
     this.sections.set("message_history", messages);
     return this;
   }
 
   addMentions(mentions: {
-    users?: Array<{ id: string; username: string; bot: boolean }>;
+    users?: Array<{
+      id: string;
+      username: string;
+      display_name: string;
+      bot: boolean;
+    }>;
     channels?: Array<{ id: string; name: string; type: string }>;
     roles?: Array<{ id: string; name: string }>;
   }) {
@@ -138,6 +155,7 @@ export async function buildContextXML(
     author: string;
     content: string;
     timestamp: number;
+    formatted_time: string;
   }> = [];
   try {
     const messages = await channel.messages.fetch({ limit: 6 });
@@ -150,6 +168,7 @@ export async function buildContextXML(
           : msg.author.username,
         content: msg.content,
         timestamp: msg.createdTimestamp,
+        formatted_time: formatTimestamp(msg.createdTimestamp),
       }));
   } catch (error) {
     // no-op
@@ -159,6 +178,7 @@ export async function buildContextXML(
     (user) => ({
       id: user.id,
       username: user.username,
+      display_name: user.displayName,
       bot: user.bot,
     }),
   );
@@ -178,10 +198,14 @@ export async function buildContextXML(
     }),
   );
 
+  const authorMember = guild?.members.cache.get(author.id);
+
   const context = new ContextBuilder()
     .addUser({
       id: author.id,
       username: author.username,
+      display_name: author.displayName,
+      nickname: authorMember?.nickname || undefined,
       discriminator: author.discriminator,
       bot: author.bot,
     })
@@ -189,6 +213,7 @@ export async function buildContextXML(
       id: message.id,
       content: message.content,
       timestamp: message.createdTimestamp,
+      formatted_time: formatTimestamp(message.createdTimestamp),
       mentions_bot: message.mentions.has(message.client.user!.id),
       is_reply: message.reference !== null,
     })
