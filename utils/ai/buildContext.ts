@@ -114,6 +114,13 @@ class ContextBuilder {
 
     const formattedXML = await prettier.format(rawXML, {
       parser: "html",
+      htmlWhitespaceSensitivity: "ignore",
+      printWidth: 120,
+      tabWidth: 2,
+      useTabs: false,
+      singleQuote: false,
+      bracketSameLine: true,
+      bracketSpacing: false,
     });
 
     return formattedXML;
