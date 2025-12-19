@@ -1,6 +1,6 @@
 import { generateText, tool } from "ai";
 import { z } from "zod";
-import { globalModel } from "../../../clients/ai";
+import { attachmentModel } from "../../../clients/ai";
 
 export const createGetAttachmentDescriptionTool = () =>
   tool({
@@ -36,7 +36,7 @@ export const createGetAttachmentDescriptionTool = () =>
           const prompt = customPrompt || defaultPrompt;
 
           const result = await generateText({
-            model: globalModel,
+            model: attachmentModel,
             messages: [
               {
                 role: "user",
@@ -52,6 +52,7 @@ export const createGetAttachmentDescriptionTool = () =>
                 ],
               },
             ],
+            maxOutputTokens: 2048,
           });
 
           return {
@@ -77,13 +78,14 @@ export const createGetAttachmentDescriptionTool = () =>
           const prompt = customPrompt || defaultPrompt;
 
           const result = await generateText({
-            model: globalModel,
+            model: attachmentModel,
             messages: [
               {
                 role: "user",
                 content: prompt,
               },
             ],
+            maxOutputTokens: 2048,
           });
 
           return {
