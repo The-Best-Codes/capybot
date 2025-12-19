@@ -4,8 +4,11 @@ import {
   type OmitPartialGroupDMChannel,
 } from "discord.js";
 import { ContextDictionary, type ReferencedMessage } from "./dictionary";
-import { formatTimestamp, serializeToXML } from "./xml";
 import { serializeAttachment } from "./attachments";
+
+function formatTimestamp(timestamp: number): string {
+  return new Date(timestamp).toUTCString();
+}
 
 async function fetchHistory(
   channel: Message["channel"],
@@ -73,37 +76,31 @@ async function fetchReferencedMessage(
   }
 }
 
-export async function buildContextXML(
+export async function buildContext(
   message: OmitPartialGroupDMChannel<Message<boolean>>,
 ): Promise<string> {
   const dictionary = new ContextDictionary();
   const { guild, channel, author } = message;
 
   dictionary.registerUser(message.member || author);
-  // dictionary.registerChannel(channel);
-
   message.mentions.users.forEach((u) => dictionary.registerUser(u));
   message.mentions.channels.forEach((c) =>
     dictionary.registerChannel(c as any),
   );
   message.mentions.roles.forEach((r) => dictionary.registerRole(r));
-
   message.attachments.forEach((att) =>
     dictionary.registerAttachment(serializeAttachment(att)),
   );
 
   const rawHistory = await fetchHistory(channel, dictionary);
-
   const history = rawHistory.filter((h) => h.id !== message.id);
 
   const referencedMessageIds = new Set<string>();
-
   history.forEach((h) => {
     if (h.referenced_message_id) {
       referencedMessageIds.add(h.referenced_message_id);
     }
   });
-
   if (message.reference?.messageId) {
     referencedMessageIds.add(message.reference.messageId);
   }
@@ -142,59 +139,16 @@ export async function buildContextXML(
     content: message.content,
     timestamp: formatTimestamp(message.createdTimestamp),
     referenced_message_id: message.reference?.messageId || null,
+    attachment_ids: Array.from(message.attachments.keys()),
   };
 
-  const dictionaryXML = dictionary.getXML();
+  const contextData = {
+    dictionary: dictionary.getDictionary(),
+    current_guild: guildInfo,
+    current_channel: currentChannelInfo,
+    message_history: history,
+    current_message: currentMessage,
+  };
 
-  const guildXML = serializeToXML("current_guild", guildInfo);
-  const channelXML = serializeToXML("current_channel", currentChannelInfo);
-
-  const historyXML =
-    history.length > 0
-      ? `<message_history>${history
-          .map((h) =>
-            [
-              `<message id="${h.id}" author_id="${h.author_id}">`,
-              serializeToXML("content", h.content),
-              serializeToXML("timestamp", h.timestamp),
-              h.referenced_message_id
-                ? serializeToXML(
-                    "reference_message_id",
-                    h.referenced_message_id,
-                  )
-                : "",
-              `</message>`,
-            ].join(""),
-          )
-          .join("")}</message_history>`
-      : "";
-
-  const attachmentsList = Array.from(message.attachments.values()).map(
-    serializeAttachment,
-  );
-  const attachmentsXML =
-    attachmentsList.length > 0
-      ? `<attachments>${attachmentsList
-          .map((att) => {
-            const { id, ...rest } = att;
-            return serializeToXML("attachment", rest);
-          })
-          .join("")}</attachments>`
-      : "";
-
-  const messageXML = [
-    `<current_message id="${currentMessage.id}" author_id="${currentMessage.author_id}">`,
-    serializeToXML("content", currentMessage.content),
-    serializeToXML("timestamp", currentMessage.timestamp),
-    currentMessage.referenced_message_id
-      ? serializeToXML(
-          "reference_message_id",
-          currentMessage.referenced_message_id,
-        )
-      : "",
-    attachmentsXML,
-    `</current_message>`,
-  ].join("");
-
-  return `<root>${dictionaryXML}${guildXML}${channelXML}${historyXML}${messageXML}</root>`;
+  return JSON.stringify(contextData, null, 2);
 }

@@ -1,5 +1,4 @@
 import type { Attachment } from "discord.js";
-import { escapeXML, serializeToXML } from "./xml";
 
 export interface SerializedAttachment {
   id: string;
@@ -23,21 +22,4 @@ export function serializeAttachment(
     width: attachment.width || null,
     height: attachment.height || null,
   };
-}
-
-export function attachmentToXML(attachment: SerializedAttachment): string {
-  const content = [
-    serializeToXML("name", attachment.name),
-    serializeToXML("url", attachment.url),
-    attachment.mime_type
-      ? serializeToXML("mime_type", attachment.mime_type)
-      : "",
-    serializeToXML("size", attachment.size),
-    attachment.width ? serializeToXML("width", attachment.width) : "",
-    attachment.height ? serializeToXML("height", attachment.height) : "",
-  ]
-    .filter((x) => x.length > 0)
-    .join("");
-
-  return `<attachment id="${escapeXML(attachment.id)}">${content}</attachment>`;
 }

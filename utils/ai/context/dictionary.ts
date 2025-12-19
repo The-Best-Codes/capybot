@@ -6,8 +6,7 @@ import {
   type Channel,
   type GuildBasedChannel,
 } from "discord.js";
-import { escapeXML, serializeToXML } from "./xml";
-import { attachmentToXML, type SerializedAttachment } from "./attachments";
+import type { SerializedAttachment } from "./attachments";
 
 export interface ReferencedMessage {
   id: string;
@@ -54,79 +53,48 @@ export class ContextDictionary {
     }
   }
 
-  getXML(): string {
-    let xml = "<dictionary>";
+  getDictionary() {
+    const users: Record<string, any> = {};
+    for (const [id, entity] of this.users) {
+      const isMember = "user" in entity;
+      const userObj = isMember ? entity.user : (entity as User);
+      const memberObj = isMember ? (entity as GuildMember) : undefined;
 
-    if (this.users.size > 0) {
-      xml += "<users>";
-      for (const [id, entity] of this.users) {
-        const isMember = "user" in entity;
-        const userObj = isMember ? entity.user : (entity as User);
-        const memberObj = isMember ? (entity as GuildMember) : undefined;
-
-        const content = [
-          serializeToXML("username", userObj.username),
-          serializeToXML(
-            "display_name",
-            memberObj?.displayName || userObj.displayName,
-          ),
-          serializeToXML("is_bot", userObj.bot || undefined),
-        ].join("");
-
-        xml += `<user id="${escapeXML(id)}">${content}</user>`;
-      }
-      xml += "</users>";
+      users[id] = {
+        username: userObj.username,
+        display_name: memberObj?.displayName || userObj.displayName,
+        is_bot: userObj.bot,
+      };
     }
 
-    if (this.channels.size > 0) {
-      xml += "<channels>";
-      for (const [id, channel] of this.channels) {
-        const name = "name" in channel ? channel.name : "dm-channel";
-        const type = "type" in channel ? ChannelType[channel.type] : "Unknown";
-
-        const content = [
-          serializeToXML("name", name),
-          serializeToXML("type", type),
-        ].join("");
-
-        xml += `<channel id="${escapeXML(id)}">${content}</channel>`;
-      }
-      xml += "</channels>";
+    const channels: Record<string, any> = {};
+    for (const [id, channel] of this.channels) {
+      const name = "name" in channel ? channel.name : "dm-channel";
+      const type = "type" in channel ? ChannelType[channel.type] : "Unknown";
+      channels[id] = { name, type };
     }
 
-    if (this.roles.size > 0) {
-      xml += "<roles>";
-      for (const [id, role] of this.roles) {
-        xml += `<role id="${escapeXML(id)}">${serializeToXML("name", role.name)}</role>`;
-      }
-      xml += "</roles>";
+    const roles: Record<string, any> = {};
+    for (const [id, role] of this.roles) {
+      roles[id] = { name: role.name };
     }
 
-    if (this.referencedMessages.size > 0) {
-      xml += "<referenced_messages>";
-      for (const [id, msg] of this.referencedMessages) {
-        const content = [
-          serializeToXML("content", msg.content),
-          serializeToXML("timestamp", msg.timestamp),
-          msg.referenced_message_id
-            ? serializeToXML("reference_message_id", msg.referenced_message_id)
-            : "",
-        ].join("");
-
-        xml += `<message id="${escapeXML(id)}" author_id="${escapeXML(msg.author_id)}">${content}</message>`;
-      }
-      xml += "</referenced_messages>";
+    const referenced_messages: Record<string, ReferencedMessage> = {};
+    for (const [id, msg] of this.referencedMessages) {
+      referenced_messages[id] = msg;
     }
 
-    if (this.attachments.size > 0) {
-      xml += "<attachments>";
-      for (const [id, attachment] of this.attachments) {
-        xml += attachmentToXML(attachment);
-      }
-      xml += "</attachments>";
+    const attachments: Record<string, SerializedAttachment> = {};
+    for (const [id, att] of this.attachments) {
+      attachments[id] = att;
     }
 
-    xml += "</dictionary>";
-    return xml;
+    return {
+      users,
+      channels,
+      roles,
+      referenced_messages,
+      attachments,
+    };
   }
 }

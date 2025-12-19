@@ -6,7 +6,7 @@ import {
   type OmitPartialGroupDMChannel,
 } from "discord.js";
 import { globalModel } from "../clients/ai";
-import { buildContextXML } from "../utils/ai/context";
+import { buildContext } from "../utils/ai/context";
 import { systemInstructions } from "../utils/ai/systemPrompt";
 import { createTools } from "../utils/ai/tools";
 import { logger } from "../utils/logger";
@@ -37,8 +37,11 @@ export default {
     if (!isMentioned && !isReplyToBot) return;
 
     try {
-      const context = await buildContextXML(message);
-      logger.debug("Context XML:", context);
+      const context = await buildContext(message);
+      logger.debug(
+        `[event:messageCreate] Responding to message ID ${message.id}. Context:`,
+        context,
+      );
 
       const prompt = context;
       const tools = createTools(message.channel);

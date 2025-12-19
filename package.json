@@ -9,7 +9,8 @@
     "start": "discraft start",
     "build": "discraft build",
     "dev": "discraft dev",
-    "fmt": "prettier --write ."
+    "fmt": "prettier --write .",
+    "tsc": "tsc -b --noEmit"
   },
   "devDependencies": {
     "discraft": "^1.7.11",
