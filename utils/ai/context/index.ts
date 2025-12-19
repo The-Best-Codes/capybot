@@ -26,7 +26,7 @@ function serializeAttachment(attachment: Attachment): SerializedAttachment {
 async function fetchHistory(
   channel: Message["channel"],
   dictionary: ContextDictionary,
-  limit = 10,
+  limit = 50,
 ) {
   try {
     const messages = await channel.messages.fetch({ limit: limit });
