@@ -8,10 +8,19 @@ import {
 } from "discord.js";
 import { escapeXML, serializeToXML } from "./xml";
 
+export interface ReferencedMessage {
+  id: string;
+  author_id: string;
+  content: string;
+  timestamp: string;
+  referenced_message_id: string | null;
+}
+
 export class ContextDictionary {
   private users = new Map<string, User | GuildMember>();
   private channels = new Map<string, Channel | GuildBasedChannel>();
   private roles = new Map<string, Role>();
+  private referencedMessages = new Map<string, ReferencedMessage>();
 
   registerUser(user: User | GuildMember) {
     if (!this.users.has(user.id)) {
@@ -28,6 +37,12 @@ export class ContextDictionary {
   registerRole(role: Role) {
     if (!this.roles.has(role.id)) {
       this.roles.set(role.id, role);
+    }
+  }
+
+  registerReferencedMessage(message: ReferencedMessage) {
+    if (!this.referencedMessages.has(message.id)) {
+      this.referencedMessages.set(message.id, message);
     }
   }
 
@@ -77,6 +92,22 @@ export class ContextDictionary {
         xml += `<role id="${escapeXML(id)}">${serializeToXML("name", role.name)}</role>`;
       }
       xml += "</roles>";
+    }
+
+    if (this.referencedMessages.size > 0) {
+      xml += "<referenced_messages>";
+      for (const [id, msg] of this.referencedMessages) {
+        const content = [
+          serializeToXML("content", msg.content),
+          serializeToXML("timestamp", msg.timestamp),
+          msg.referenced_message_id
+            ? serializeToXML("reference_message_id", msg.referenced_message_id)
+            : "",
+        ].join("");
+
+        xml += `<message id="${escapeXML(id)}" author_id="${escapeXML(msg.author_id)}">${content}</message>`;
+      }
+      xml += "</referenced_messages>";
     }
 
     xml += "</dictionary>";

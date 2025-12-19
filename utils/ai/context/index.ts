@@ -3,7 +3,7 @@ import {
   Message,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
-import { ContextDictionary } from "./dictionary";
+import { ContextDictionary, type ReferencedMessage } from "./dictionary";
 import { formatTimestamp, serializeToXML } from "./xml";
 
 async function fetchHistory(
@@ -31,11 +31,36 @@ async function fetchHistory(
         author_id: msg.author.id,
         content: msg.content,
         timestamp: formatTimestamp(msg.createdTimestamp),
-        is_reply: msg.reference ? true : false,
+        referenced_message_id: msg.reference?.messageId || null,
       };
     });
   } catch (e) {
     return [];
+  }
+}
+
+async function fetchReferencedMessage(
+  channel: Message["channel"],
+  messageId: string,
+  dictionary: ContextDictionary,
+): Promise<ReferencedMessage | null> {
+  try {
+    const msg = await channel.messages.fetch(messageId);
+
+    dictionary.registerUser(msg.member || msg.author);
+    msg.mentions.users.forEach((u) => dictionary.registerUser(u));
+    msg.mentions.channels.forEach((c) => dictionary.registerChannel(c as any));
+    msg.mentions.roles.forEach((r) => dictionary.registerRole(r));
+
+    return {
+      id: msg.id,
+      author_id: msg.author.id,
+      content: msg.content,
+      timestamp: formatTimestamp(msg.createdTimestamp),
+      referenced_message_id: msg.reference?.messageId || null,
+    };
+  } catch (e) {
+    return null;
   }
 }
 
@@ -57,6 +82,30 @@ export async function buildContextXML(
   const rawHistory = await fetchHistory(channel, dictionary);
 
   const history = rawHistory.filter((h) => h.id !== message.id);
+
+  const referencedMessageIds = new Set<string>();
+
+  history.forEach((h) => {
+    if (h.referenced_message_id) {
+      referencedMessageIds.add(h.referenced_message_id);
+    }
+  });
+
+  if (message.reference?.messageId) {
+    referencedMessageIds.add(message.reference.messageId);
+  }
+
+  const historyIds = new Set(history.map((h) => h.id));
+  const missingReferencedIds = Array.from(referencedMessageIds).filter(
+    (id) => !historyIds.has(id),
+  );
+
+  for (const refId of missingReferencedIds) {
+    const refMsg = await fetchReferencedMessage(channel, refId, dictionary);
+    if (refMsg) {
+      dictionary.registerReferencedMessage(refMsg);
+    }
+  }
 
   const guildInfo = guild
     ? {
@@ -94,8 +143,13 @@ export async function buildContextXML(
             [
               `<message id="${h.id}" author_id="${h.author_id}">`,
               serializeToXML("content", h.content),
-              serializeToXML("time", h.timestamp),
-              serializeToXML("is_reply", h.is_reply),
+              serializeToXML("timestamp", h.timestamp),
+              h.referenced_message_id
+                ? serializeToXML(
+                    "reference_message_id",
+                    h.referenced_message_id,
+                  )
+                : "",
               `</message>`,
             ].join(""),
           )
@@ -106,7 +160,12 @@ export async function buildContextXML(
     `<current_message id="${currentMessage.id}" author_id="${currentMessage.author_id}">`,
     serializeToXML("content", currentMessage.content),
     serializeToXML("timestamp", currentMessage.timestamp),
-    serializeToXML("replying_to", currentMessage.referenced_message_id),
+    currentMessage.referenced_message_id
+      ? serializeToXML(
+          "reference_message_id",
+          currentMessage.referenced_message_id,
+        )
+      : "",
     `</current_message>`,
   ].join("");
 
