@@ -29,7 +29,7 @@ export const createGetAttachmentDescriptionTool = () =>
         const prompt = customPrompt || defaultPrompt;
 
         const result = await generateText({
-          system: "/nothink", // Disable reasoning for nvidia/nemotron-nano-12b-v2-vl:free
+          system: "/no_think", // Disable reasoning for nvidia/nemotron-nano-12b-v2-vl:free
           model: attachmentModel,
           messages: [
             {
