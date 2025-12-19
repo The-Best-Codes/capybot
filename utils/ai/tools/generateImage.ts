@@ -40,6 +40,7 @@ export const createGenerateImageTool = () =>
 
         return {
           success: true,
+          instructions: `Embed the image in your message using the following markdown syntax: [Image](${imageUrl})`,
           imageUrl,
         };
       } catch (error) {
