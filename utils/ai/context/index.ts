@@ -108,7 +108,7 @@ export async function buildContext(
     history.map(async (msg) => {
       const tools = await toolCallStore.get(msg.id);
       if (tools && tools.length > 0) {
-        return { ...msg, tool_calls: tools };
+        return { ...msg, tool_calls: JSON.stringify(tools) };
       }
       return msg;
     }),
@@ -171,7 +171,7 @@ export async function buildContext(
     current_channel: currentChannelInfo,
     message_history: historyWithTools,
     current_message: currentMessage,
-    ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
+    ...(toolCalls.length > 0 && { tool_calls: JSON.stringify(toolCalls) }),
   };
 
   return JSON.stringify(contextData, null, 2);
