@@ -39,6 +39,7 @@ export default {
     try {
       message.channel.sendTyping();
 
+      // TODO: Compact the context JSON, e.g. minify it
       const context = await buildContext(message);
       logger.debug(
         `[event:messageCreate] Responding to message ID ${message.id}. Context:`,
