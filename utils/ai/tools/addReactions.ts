@@ -28,16 +28,11 @@ export const createAddReactionsTool = (channel: TextBasedChannel) =>
         }
         return {
           success: true,
-          messageId,
-          reactionsAdded: reactions,
-          count: reactions.length,
         };
       } catch (error) {
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
-          messageId,
-          attemptedReactions: reactions,
         };
       }
     },

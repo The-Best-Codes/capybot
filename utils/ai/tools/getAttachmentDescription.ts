@@ -8,12 +8,14 @@ export const createGetAttachmentDescriptionTool = () =>
       "Get a summary/description of an attachment from a URL. Fetches the file and uses AI to analyze it.",
     inputSchema: z.object({
       url: z.string().describe("The URL of the attachment to describe"),
-      fileName: z
+      customPrompt: z
         .string()
         .optional()
-        .describe("Optional file name for context"),
+        .describe(
+          "Optional custom prompt to use when describing the attachment. If not provided, uses a default verbose description prompt.",
+        ),
     }),
-    execute: async ({ url, fileName }) => {
+    execute: async ({ url, customPrompt }) => {
       try {
         const response = await fetch(url);
 
@@ -29,6 +31,10 @@ export const createGetAttachmentDescriptionTool = () =>
         const buffer = await response.arrayBuffer();
 
         if (contentType.startsWith("image/")) {
+          const defaultPrompt =
+            "Give a very verbose description of this image. Describe all visible elements, text, colors, composition, and any other notable details.";
+          const prompt = customPrompt || defaultPrompt;
+
           const result = await generateText({
             model: globalModel,
             messages: [
@@ -37,7 +43,7 @@ export const createGetAttachmentDescriptionTool = () =>
                 content: [
                   {
                     type: "text",
-                    text: `Please provide a brief, concise summary of this image${fileName ? ` (${fileName})` : ""}. Focus on the main content and key details.`,
+                    text: prompt,
                   },
                   {
                     type: "image",
@@ -51,9 +57,6 @@ export const createGetAttachmentDescriptionTool = () =>
           return {
             success: true,
             summary: result.text,
-            contentType,
-            fileName,
-            url,
           };
         }
 
@@ -70,12 +73,15 @@ export const createGetAttachmentDescriptionTool = () =>
               ? text.substring(0, maxLength) + "\n\n[Content truncated...]"
               : text;
 
+          const defaultPrompt = `Give a very verbose description of this file. Here is the content:\n\n${truncatedText}`;
+          const prompt = customPrompt || defaultPrompt;
+
           const result = await generateText({
             model: globalModel,
             messages: [
               {
                 role: "user",
-                content: `Please provide a brief, concise summary of the following ${contentType} content${fileName ? ` (${fileName})` : ""}: \n\n${truncatedText}`,
+                content: prompt,
               },
             ],
           });
@@ -83,24 +89,17 @@ export const createGetAttachmentDescriptionTool = () =>
           return {
             success: true,
             summary: result.text,
-            contentType,
-            fileName,
-            url,
           };
         }
 
         return {
           success: false,
           error: `Unsupported content type: ${contentType}`,
-          url,
-          fileName,
         };
       } catch (error) {
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
-          url,
-          fileName,
         };
       }
     },
