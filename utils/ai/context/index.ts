@@ -5,6 +5,7 @@ import {
 } from "discord.js";
 import { ContextDictionary, type ReferencedMessage } from "./dictionary";
 import { formatTimestamp, serializeToXML } from "./xml";
+import { serializeAttachment } from "./attachments";
 
 async function fetchHistory(
   channel: Message["channel"],
@@ -25,6 +26,10 @@ async function fetchHistory(
         dictionary.registerChannel(c as any),
       );
       msg.mentions.roles.forEach((r) => dictionary.registerRole(r));
+
+      msg.attachments.forEach((att) =>
+        dictionary.registerAttachment(serializeAttachment(att)),
+      );
 
       return {
         id: msg.id,
@@ -52,6 +57,10 @@ async function fetchReferencedMessage(
     msg.mentions.channels.forEach((c) => dictionary.registerChannel(c as any));
     msg.mentions.roles.forEach((r) => dictionary.registerRole(r));
 
+    msg.attachments.forEach((att) =>
+      dictionary.registerAttachment(serializeAttachment(att)),
+    );
+
     return {
       id: msg.id,
       author_id: msg.author.id,
@@ -78,6 +87,10 @@ export async function buildContextXML(
     dictionary.registerChannel(c as any),
   );
   message.mentions.roles.forEach((r) => dictionary.registerRole(r));
+
+  message.attachments.forEach((att) =>
+    dictionary.registerAttachment(serializeAttachment(att)),
+  );
 
   const rawHistory = await fetchHistory(channel, dictionary);
 
@@ -156,6 +169,19 @@ export async function buildContextXML(
           .join("")}</message_history>`
       : "";
 
+  const attachmentsList = Array.from(message.attachments.values()).map(
+    serializeAttachment,
+  );
+  const attachmentsXML =
+    attachmentsList.length > 0
+      ? `<attachments>${attachmentsList
+          .map((att) => {
+            const { id, ...rest } = att;
+            return serializeToXML("attachment", rest);
+          })
+          .join("")}</attachments>`
+      : "";
+
   const messageXML = [
     `<current_message id="${currentMessage.id}" author_id="${currentMessage.author_id}">`,
     serializeToXML("content", currentMessage.content),
@@ -166,6 +192,7 @@ export async function buildContextXML(
           currentMessage.referenced_message_id,
         )
       : "",
+    attachmentsXML,
     `</current_message>`,
   ].join("");
 

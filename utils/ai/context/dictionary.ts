@@ -7,6 +7,7 @@ import {
   type GuildBasedChannel,
 } from "discord.js";
 import { escapeXML, serializeToXML } from "./xml";
+import { attachmentToXML, type SerializedAttachment } from "./attachments";
 
 export interface ReferencedMessage {
   id: string;
@@ -21,6 +22,7 @@ export class ContextDictionary {
   private channels = new Map<string, Channel | GuildBasedChannel>();
   private roles = new Map<string, Role>();
   private referencedMessages = new Map<string, ReferencedMessage>();
+  private attachments = new Map<string, SerializedAttachment>();
 
   registerUser(user: User | GuildMember) {
     if (!this.users.has(user.id)) {
@@ -43,6 +45,12 @@ export class ContextDictionary {
   registerReferencedMessage(message: ReferencedMessage) {
     if (!this.referencedMessages.has(message.id)) {
       this.referencedMessages.set(message.id, message);
+    }
+  }
+
+  registerAttachment(attachment: SerializedAttachment) {
+    if (!this.attachments.has(attachment.id)) {
+      this.attachments.set(attachment.id, attachment);
     }
   }
 
@@ -108,6 +116,14 @@ export class ContextDictionary {
         xml += `<message id="${escapeXML(id)}" author_id="${escapeXML(msg.author_id)}">${content}</message>`;
       }
       xml += "</referenced_messages>";
+    }
+
+    if (this.attachments.size > 0) {
+      xml += "<attachments>";
+      for (const [id, attachment] of this.attachments) {
+        xml += attachmentToXML(attachment);
+      }
+      xml += "</attachments>";
     }
 
     xml += "</dictionary>";
