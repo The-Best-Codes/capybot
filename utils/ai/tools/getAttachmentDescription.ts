@@ -1,6 +1,7 @@
 import { generateText, tool } from "ai";
 import { z } from "zod";
 import { attachmentModel } from "../../../clients/ai";
+import { logger } from "../../logger";
 
 export const createGetAttachmentDescriptionTool = () =>
   tool({
@@ -28,6 +29,7 @@ export const createGetAttachmentDescriptionTool = () =>
         const prompt = customPrompt || defaultPrompt;
 
         const result = await generateText({
+          system: "/nothink", // Disable reasoning for nvidia/nemotron-nano-12b-v2-vl:free
           model: attachmentModel,
           messages: [
             {
@@ -53,6 +55,7 @@ export const createGetAttachmentDescriptionTool = () =>
           summary: result.text,
         };
       } catch (error) {
+        logger.error("Error generating attachment description:", error);
         return {
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
