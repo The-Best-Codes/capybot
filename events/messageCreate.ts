@@ -1,8 +1,4 @@
-import {
-  generateText,
-  lastAssistantMessageIsCompleteWithToolCalls,
-  stepCountIs,
-} from "ai";
+import { generateText, stepCountIs } from "ai";
 import {
   Client,
   Events,
@@ -12,6 +8,7 @@ import {
 import { globalModel } from "../clients/ai";
 import { buildContextXML } from "../utils/ai/context";
 import { systemInstructions } from "../utils/ai/systemPrompt";
+import { createTools } from "../utils/ai/tools";
 import { logger } from "../utils/logger";
 
 export default {
@@ -44,11 +41,13 @@ export default {
       logger.debug("Context XML:", context);
 
       const prompt = context;
+      const tools = createTools(message.channel);
 
       const { text } = await generateText({
         model: globalModel,
         prompt,
         system: systemInstructions,
+        tools,
         stopWhen: stepCountIs(3),
       });
 
