@@ -6,7 +6,16 @@ import {
   type Channel,
   type GuildBasedChannel,
 } from "discord.js";
-import type { SerializedAttachment } from "./attachments";
+
+export interface SerializedAttachment {
+  id: string;
+  name: string;
+  url: string;
+  mime_type: string | null;
+  size: number;
+  width: number | null;
+  height: number | null;
+}
 
 export interface ReferencedMessage {
   id: string;
@@ -14,6 +23,7 @@ export interface ReferencedMessage {
   content: string;
   timestamp: string;
   referenced_message_id: string | null;
+  attachments?: SerializedAttachment[];
 }
 
 export class ContextDictionary {
@@ -21,7 +31,6 @@ export class ContextDictionary {
   private channels = new Map<string, Channel | GuildBasedChannel>();
   private roles = new Map<string, Role>();
   private referencedMessages = new Map<string, ReferencedMessage>();
-  private attachments = new Map<string, SerializedAttachment>();
 
   registerUser(user: User | GuildMember) {
     if (!this.users.has(user.id)) {
@@ -44,12 +53,6 @@ export class ContextDictionary {
   registerReferencedMessage(message: ReferencedMessage) {
     if (!this.referencedMessages.has(message.id)) {
       this.referencedMessages.set(message.id, message);
-    }
-  }
-
-  registerAttachment(attachment: SerializedAttachment) {
-    if (!this.attachments.has(attachment.id)) {
-      this.attachments.set(attachment.id, attachment);
     }
   }
 
@@ -84,17 +87,11 @@ export class ContextDictionary {
       referenced_messages[id] = msg;
     }
 
-    const attachments: Record<string, SerializedAttachment> = {};
-    for (const [id, att] of this.attachments) {
-      attachments[id] = att;
-    }
-
     return {
       users,
       channels,
       roles,
       referenced_messages,
-      attachments,
     };
   }
 }

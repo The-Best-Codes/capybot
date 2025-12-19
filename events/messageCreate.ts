@@ -37,6 +37,8 @@ export default {
     if (!isMentioned && !isReplyToBot) return;
 
     try {
+      message.channel.sendTyping();
+
       const context = await buildContext(message);
       logger.debug(
         `[event:messageCreate] Responding to message ID ${message.id}. Context:`,

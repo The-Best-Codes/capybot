@@ -1,13 +1,29 @@
 import {
   ChannelType,
   Message,
+  Attachment,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
-import { ContextDictionary, type ReferencedMessage } from "./dictionary";
-import { serializeAttachment } from "./attachments";
+import {
+  ContextDictionary,
+  type ReferencedMessage,
+  type SerializedAttachment,
+} from "./dictionary";
 
 function formatTimestamp(timestamp: number): string {
   return new Date(timestamp).toUTCString();
+}
+
+function serializeAttachment(attachment: Attachment): SerializedAttachment {
+  return {
+    id: attachment.id,
+    name: attachment.name,
+    url: attachment.url,
+    mime_type: attachment.contentType || null,
+    size: attachment.size,
+    width: attachment.width || null,
+    height: attachment.height || null,
+  };
 }
 
 async function fetchHistory(
@@ -30,9 +46,7 @@ async function fetchHistory(
       );
       msg.mentions.roles.forEach((r) => dictionary.registerRole(r));
 
-      msg.attachments.forEach((att) =>
-        dictionary.registerAttachment(serializeAttachment(att)),
-      );
+      const attachments = msg.attachments.map(serializeAttachment);
 
       return {
         id: msg.id,
@@ -40,6 +54,7 @@ async function fetchHistory(
         content: msg.content,
         timestamp: formatTimestamp(msg.createdTimestamp),
         referenced_message_id: msg.reference?.messageId || null,
+        ...(attachments.length > 0 && { attachments }),
       };
     });
   } catch (e) {
@@ -60,9 +75,7 @@ async function fetchReferencedMessage(
     msg.mentions.channels.forEach((c) => dictionary.registerChannel(c as any));
     msg.mentions.roles.forEach((r) => dictionary.registerRole(r));
 
-    msg.attachments.forEach((att) =>
-      dictionary.registerAttachment(serializeAttachment(att)),
-    );
+    const attachments = msg.attachments.map(serializeAttachment);
 
     return {
       id: msg.id,
@@ -70,6 +83,7 @@ async function fetchReferencedMessage(
       content: msg.content,
       timestamp: formatTimestamp(msg.createdTimestamp),
       referenced_message_id: msg.reference?.messageId || null,
+      ...(attachments.length > 0 && { attachments }),
     };
   } catch (e) {
     return null;
@@ -88,9 +102,6 @@ export async function buildContext(
     dictionary.registerChannel(c as any),
   );
   message.mentions.roles.forEach((r) => dictionary.registerRole(r));
-  message.attachments.forEach((att) =>
-    dictionary.registerAttachment(serializeAttachment(att)),
-  );
 
   const rawHistory = await fetchHistory(channel, dictionary);
   const history = rawHistory.filter((h) => h.id !== message.id);
@@ -132,6 +143,8 @@ export async function buildContext(
     topic: "topic" in channel ? channel.topic : null,
   };
 
+  const currentAttachments = message.attachments.map(serializeAttachment);
+
   const currentMessage = {
     id: message.id,
     author_id: author.id,
@@ -139,7 +152,7 @@ export async function buildContext(
     content: message.content,
     timestamp: formatTimestamp(message.createdTimestamp),
     referenced_message_id: message.reference?.messageId || null,
-    attachment_ids: Array.from(message.attachments.keys()),
+    ...(currentAttachments.length > 0 && { attachments: currentAttachments }),
   };
 
   const contextData = {
