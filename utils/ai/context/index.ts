@@ -104,8 +104,18 @@ export async function buildContext(
   const rawHistory = await fetchHistory(channel, dictionary);
   const history = rawHistory.filter((h) => h.id !== message.id);
 
+  const historyWithTools = await Promise.all(
+    history.map(async (msg) => {
+      const tools = await toolCallStore.get(msg.id);
+      if (tools && tools.length > 0) {
+        return { ...msg, tool_calls: tools };
+      }
+      return msg;
+    }),
+  );
+
   const referencedMessageIds = new Set<string>();
-  history.forEach((h) => {
+  historyWithTools.forEach((h) => {
     if (h.referenced_message_id) {
       referencedMessageIds.add(h.referenced_message_id);
     }
@@ -114,7 +124,7 @@ export async function buildContext(
     referencedMessageIds.add(message.reference.messageId);
   }
 
-  const historyIds = new Set(history.map((h) => h.id));
+  const historyIds = new Set(historyWithTools.map((h) => h.id));
   const missingReferencedIds = Array.from(referencedMessageIds).filter(
     (id) => !historyIds.has(id),
   );
@@ -159,7 +169,7 @@ export async function buildContext(
     dictionary: dictionary.getDictionary(),
     current_guild: guildInfo,
     current_channel: currentChannelInfo,
-    message_history: history,
+    message_history: historyWithTools,
     current_message: currentMessage,
     ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
   };
