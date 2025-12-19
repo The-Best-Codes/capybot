@@ -4,11 +4,8 @@ import {
   Attachment,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
-import {
-  ContextDictionary,
-  type ReferencedMessage,
-  type SerializedAttachment,
-} from "./dictionary";
+import { ContextDictionary } from "./dictionary";
+import type { ReferencedMessage, SerializedAttachment } from "./types";
 
 function formatTimestamp(timestamp: number): string {
   return new Date(timestamp).toUTCString();
