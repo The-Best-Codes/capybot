@@ -1,9 +1,10 @@
 import {
+  Attachment,
   ChannelType,
   Message,
-  Attachment,
   type OmitPartialGroupDMChannel,
 } from "discord.js";
+import { toolCallStore } from "../../db/toolCallsDb";
 import { ContextDictionary } from "./dictionary";
 import type { ReferencedMessage, SerializedAttachment } from "./types";
 
@@ -152,12 +153,15 @@ export async function buildContext(
     ...(currentAttachments.length > 0 && { attachments: currentAttachments }),
   };
 
+  const toolCalls = await toolCallStore.get(message.id);
+
   const contextData = {
     dictionary: dictionary.getDictionary(),
     current_guild: guildInfo,
     current_channel: currentChannelInfo,
     message_history: history,
     current_message: currentMessage,
+    ...(toolCalls.length > 0 && { tool_calls: toolCalls }),
   };
 
   return JSON.stringify(contextData, null, 2);
