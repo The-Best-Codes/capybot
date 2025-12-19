@@ -14,8 +14,8 @@ export default {
       client.user.setPresence({
         activities: [
           {
-            name: "Discraft",
-            state: "Created with Discraft",
+            name: "chilling",
+            state: "chillin' like a capybot",
             type: ActivityType.Custom,
           },
         ],
