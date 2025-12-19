@@ -1,4 +1,8 @@
-import { generateText } from "ai";
+import {
+  generateText,
+  lastAssistantMessageIsCompleteWithToolCalls,
+  stepCountIs,
+} from "ai";
 import {
   Client,
   Events,
@@ -39,13 +43,15 @@ export default {
       const context = await buildContextXML(message);
       logger.debug("Context XML:", context);
 
-      const prompt = `${context}\n\nUser message: ${message.content}`;
+      const prompt = context;
 
       const { text } = await generateText({
         model: globalModel,
         prompt,
         system: systemInstructions,
+        stopWhen: stepCountIs(3),
       });
+
       await message.reply({
         content: text,
         allowedMentions: { repliedUser: false, parse: [] },
