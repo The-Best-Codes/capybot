@@ -1,4 +1,12 @@
-import { google } from "@ai-sdk/google";
+import { openrouter } from "@openrouter/ai-sdk-provider";
 
-export const globalModel = google("gemini-2.5-flash");
-export const attachmentModel = google("gemini-2.5-flash-lite");
+export const globalModel = openrouter("x-ai/grok-4.1-fast", {
+  reasoning: {
+    enabled: false,
+    exclude: true,
+    max_tokens: 0,
+  },
+});
+export const attachmentModel = openrouter(
+  "nvidia/nemotron-nano-12b-v2-vl:free",
+);
