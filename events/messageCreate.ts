@@ -113,14 +113,14 @@ export default {
         });
       }
 
-      if (!text) {
+      if (text) {
+        await message.reply({
+          content: text,
+          allowedMentions: { repliedUser: false, parse: [] },
+        });
+      } else {
         logger.info(`No text generated for message ${message.id}`);
       }
-
-      await message.reply({
-        content: text,
-        allowedMentions: { repliedUser: false, parse: [] },
-      });
 
       conversationManager.markInteraction(message.channelId, message.author.id);
     } catch (error) {
