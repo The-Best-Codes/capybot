@@ -5,8 +5,6 @@ export default {
 
   async execute(data: { interaction: ChatInputCommandInteraction }) {
     const interaction = data.interaction;
-    await interaction.reply(
-      "Pong!\nPing received <t:" + (Date.now() / 1000).toFixed(0) + ":R>.",
-    );
+    await interaction.reply("Pong!");
   },
 };
