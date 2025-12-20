@@ -113,6 +113,10 @@ export default {
         });
       }
 
+      if (!text) {
+        logger.info(`No text generated for message ${message.id}`);
+      }
+
       await message.reply({
         content: text,
         allowedMentions: { repliedUser: false, parse: [] },
