@@ -7,6 +7,4 @@ export const globalModel = openrouter("x-ai/grok-4.1-fast", {
     max_tokens: 0,
   },
 });
-export const attachmentModel = openrouter(
-  "google/gemini-2.0-flash-lite-001",
-);
+export const attachmentModel = openrouter("google/gemini-2.0-flash-lite-001");
