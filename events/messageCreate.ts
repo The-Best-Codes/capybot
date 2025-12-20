@@ -38,9 +38,8 @@ export default {
     }
 
     const decision = conversationManager.shouldProcess(
-      message.channelId,
-      message.author.id,
-      message.content,
+      message,
+      botId,
       isMentioned,
       isReplyToBot,
     );
@@ -58,9 +57,7 @@ export default {
       }
 
       const context = await buildContext(message);
-      logger.debug(
-        `Processing msg ${message.id}. Reason: ${decision.reason}`,
-      );
+      logger.debug(`Processing msg ${message.id}. Reason: ${decision.reason}`);
 
       const prompt = context;
       const tools = createTools(message.channel);
