@@ -8,5 +8,5 @@ export const globalModel = openrouter("x-ai/grok-4.1-fast", {
   },
 });
 export const attachmentModel = openrouter(
-  "nvidia/nemotron-nano-12b-v2-vl:free",
+  "google/gemini-2.0-flash-lite-001",
 );
