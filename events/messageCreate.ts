@@ -7,8 +7,9 @@ import {
 } from "discord.js";
 import { globalModel } from "../clients/ai";
 import { buildContext } from "../utils/ai/context";
-import { systemInstructions } from "../utils/ai/systemPrompt";
+import { IGNORE_PHRASE, systemInstructions } from "../utils/ai/systemPrompt";
 import { createTools } from "../utils/ai/tools";
+import { conversationManager } from "../utils/conversation/manager";
 import { toolCallStore, type ToolCall } from "../utils/db/toolCallsDb";
 import { logger } from "../utils/logger";
 
@@ -21,30 +22,44 @@ export default {
     if (message.author.bot) return;
 
     const botId = client.user!.id;
-    const isMentioned = message.mentions.has(botId);
 
+    const isMentioned = message.mentions.has(botId);
     let isReplyToBot = false;
-    if (message.reference !== null) {
+
+    if (message.reference?.messageId) {
       try {
-        const repliedToMessage = await message.channel.messages.fetch(
-          message.reference.messageId ?? "",
-        );
-        isReplyToBot = repliedToMessage.author.id === botId;
+        const repliedMsg =
+          message.channel.messages.cache.get(message.reference.messageId) ||
+          (await message.channel.messages.fetch(message.reference.messageId));
+        isReplyToBot = repliedMsg.author.id === botId;
       } catch (error) {
         isReplyToBot = false;
       }
     }
 
-    if (!isMentioned && !isReplyToBot) return;
+    const decision = conversationManager.shouldProcess(
+      message.channelId,
+      message.author.id,
+      message.content,
+      isMentioned,
+      isReplyToBot,
+    );
+
+    if (!decision.process) return;
 
     try {
-      message.channel.sendTyping();
+      conversationManager.setGenerating(message.channelId, true);
 
-      // TODO: Compact the context JSON, e.g. minify it
+      const isExplicit = ["explicit_ping", "keyword_trigger"].includes(
+        decision.reason,
+      );
+      if (isExplicit) {
+        message.channel.sendTyping();
+      }
+
       const context = await buildContext(message);
       logger.debug(
-        `[event:messageCreate] Responding to message ID ${message.id}. Context:`,
-        context,
+        `Processing msg ${message.id}. Reason: ${decision.reason}`,
       );
 
       const prompt = context;
@@ -59,6 +74,12 @@ export default {
       });
 
       const { text } = result;
+
+      if (text.includes(IGNORE_PHRASE)) {
+        logger.info(`AI Decided to ignore message: ${message.id}`);
+        conversationManager.setGenerating(message.channelId, false);
+        return;
+      }
 
       const allToolCalls: ToolCall[] = [];
       const toolCallIdToResult: Record<string, any> = {};
@@ -99,8 +120,11 @@ export default {
         content: text,
         allowedMentions: { repliedUser: false, parse: [] },
       });
+
+      conversationManager.markInteraction(message.channelId, message.author.id);
     } catch (error) {
       logger.error(`Error generating AI response: ${error}`);
+      conversationManager.setGenerating(message.channelId, false);
     }
   },
 };
