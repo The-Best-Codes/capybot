@@ -1,7 +1,7 @@
 {
   "name": "capybot",
   "private": true,
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "description": "CapyBot is CapyBot. He's indescribable.",
   "module": "index.ts",
   "type": "module",
@@ -20,7 +20,7 @@
   "dependencies": {
     "@ai-sdk/google": "^2.0.51",
     "@openrouter/ai-sdk-provider": "^1.5.4",
-    "ai": "^5.0.115",
+    "ai": "^5.0.116",
     "consola": "^3.4.2",
     "discord.js": "^14.25.1",
     "dotenv": "^17.2.3",
