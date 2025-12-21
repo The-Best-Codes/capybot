@@ -11,27 +11,50 @@ export default {
     .setDescription("Get tool calls for a message")
     .addStringOption((option) =>
       option
-        .setName("message_id")
-        .setDescription("The message ID to get tool calls for")
+        .setName("dev_key")
+        .setDescription("Development key")
         .setRequired(true),
+    )
+    .addStringOption((option) =>
+      option
+        .setName("message_id")
+        .setDescription(
+          "The message ID to get tool calls for (optional, defaults to latest message)",
+        )
+        .setRequired(false),
     ),
 
   async execute(data: { interaction: ChatInputCommandInteraction }) {
     const interaction = data.interaction;
 
+    const devKey = interaction.options.getString("dev_key");
+    if (devKey !== process.env.DEV_KEY) {
+      await interaction.reply({
+        content: "Invalid development key.",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     let messageId;
     const messageIdRaw = interaction.options.getString("message_id");
-    try {
-      const messageUrl = new URL(messageIdRaw as string);
-      messageId = messageUrl.pathname.split("/").pop();
-    } catch {
-      messageId = messageIdRaw;
+
+    if (messageIdRaw) {
+      try {
+        const messageUrl = new URL(messageIdRaw as string);
+        messageId = messageUrl.pathname.split("/").pop();
+      } catch {
+        messageId = messageIdRaw;
+      }
+    } else {
+      const messages = await interaction.channel?.messages.fetch({ limit: 1 });
+      messageId = messages?.first()?.id;
     }
 
     if (!messageId) {
-      await interaction.editReply("Message ID is required.");
+      await interaction.editReply("Could not determine message ID.");
       return;
     }
 
