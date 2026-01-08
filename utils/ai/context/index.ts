@@ -174,5 +174,6 @@ export async function buildContext(
     ...(toolCalls.length > 0 && { tool_calls: JSON.stringify(toolCalls) }),
   };
 
-  return JSON.stringify(contextData, null, 2);
+  return JSON.stringify(contextData);
+  // return JSON.stringify(contextData, null, 2);
 }
