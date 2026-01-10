@@ -1,6 +1,6 @@
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
-export const globalModel = openrouter("xiaomi/mimo-v2-flash:free", {
+export const globalModel = openrouter("openai/gpt-oss-120b:free", {
   reasoning: {
     enabled: false,
     exclude: true,
