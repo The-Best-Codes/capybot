@@ -1,6 +1,6 @@
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
-export const globalModel = openrouter("qwen/qwen3-coder:free", {
+export const globalModel = openrouter("nvidia/nemotron-3-nano-30b-a3b:free", {
   reasoning: {
     enabled: false,
     exclude: true,
