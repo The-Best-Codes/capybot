@@ -1,6 +1,6 @@
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
-export const globalModel = openrouter("openai/gpt-oss-120b:free", {
+export const globalModel = openrouter("qwen/qwen3-coder:free", {
   reasoning: {
     enabled: false,
     exclude: true,
