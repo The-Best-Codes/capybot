@@ -1,9 +1,4 @@
-import {
-  Attachment,
-  ChannelType,
-  Message,
-  type OmitPartialGroupDMChannel,
-} from "discord.js";
+import { Attachment, ChannelType, Message } from "discord.js";
 import { toolCallStore } from "../../db/toolCallsDb";
 import { ContextDictionary } from "./dictionary";
 import type { ReferencedMessage, SerializedAttachment } from "./types";
@@ -88,9 +83,7 @@ async function fetchReferencedMessage(
   }
 }
 
-export async function buildContext(
-  message: OmitPartialGroupDMChannel<Message<boolean>>,
-): Promise<string> {
+export async function buildContext(message: Message<boolean>): Promise<string> {
   const dictionary = new ContextDictionary();
   const { guild, channel, author } = message;
 

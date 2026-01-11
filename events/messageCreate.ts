@@ -1,5 +1,6 @@
 import { generateText, stepCountIs } from "ai";
 import {
+  ChannelType,
   Client,
   Events,
   Message,
@@ -9,6 +10,7 @@ import { globalModel } from "../clients/ai";
 import { buildContext } from "../utils/ai/context";
 import { IGNORE_PHRASE, systemInstructions } from "../utils/ai/systemPrompt";
 import { createTools } from "../utils/ai/tools";
+import { checkDevAuth } from "../utils/auth/devAuth";
 import { conversationManager } from "../utils/conversation/manager";
 import { toolCallStore, type ToolCall } from "../utils/db/toolCallsDb";
 import { logger } from "../utils/logger";
@@ -17,11 +19,26 @@ export default {
   event: Events.MessageCreate,
   handler: async (
     client: Client,
-    message: OmitPartialGroupDMChannel<Message<boolean>>,
+    message: OmitPartialGroupDMChannel<Message<boolean>> | Message<boolean>,
   ) => {
     if (message.author.bot) return;
 
     const botId = client.user!.id;
+    const isDM = message.channel.type === ChannelType.DM;
+
+    if (isDM) {
+      const authResult = checkDevAuth(
+        message.author.id,
+        message.author.username,
+      );
+      if (!authResult.loggedIn) {
+        await message.reply(
+          "Sign in as a CapyBot developer to use CapyBot in DMs. Use `/dev_login` in a server first.",
+        );
+        return;
+      }
+      logger.debug(`Dev DM from ${message.author.username}: ${message.id}`);
+    }
 
     const isMentioned = message.mentions.has(botId);
     let isReplyToBot = false;
@@ -37,8 +54,12 @@ export default {
       }
     }
 
+    if (isDM) {
+      isReplyToBot = true;
+    }
+
     const decision = conversationManager.shouldProcess(
-      message,
+      message as OmitPartialGroupDMChannel<Message<boolean>>,
       botId,
       isMentioned,
       isReplyToBot,
@@ -52,7 +73,7 @@ export default {
       const isExplicit = ["explicit_ping", "keyword_trigger"].includes(
         decision.reason,
       );
-      if (isExplicit) {
+      if (isExplicit && "sendTyping" in message.channel) {
         message.channel.sendTyping();
       }
 
