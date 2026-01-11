@@ -45,7 +45,7 @@ program
       );
       console.log(`\nKey:\n${key}\n`);
       console.log(
-        "Share this key securely with the user. They can use /devlogin to authenticate.",
+        "Share this key securely with the user. They can use /dev_login to authenticate.",
       );
     } catch (error) {
       console.error(

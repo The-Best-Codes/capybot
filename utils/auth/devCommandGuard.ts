@@ -27,7 +27,7 @@ export async function requireDevAuth(
   }
 
   await interaction.reply({
-    content: `${message}\n\nUse the \`/devlogin\` command to authenticate.`,
+    content: `${message}\n\nUse the \`/dev_login\` command to authenticate.`,
     flags: MessageFlags.Ephemeral,
   });
 
