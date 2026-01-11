@@ -45,15 +45,22 @@ function ensureDataDir(): void {
 
 function ensureSessionsFile(): void {
   ensureDataDir();
-  if (!existsSync(SESSIONS_FILE)) {
-    writeFileSync(SESSIONS_FILE, "{}", "utf-8");
+  try {
+    writeFileSync(SESSIONS_FILE, "{}", { encoding: "utf-8", flag: "wx" });
+  } catch (err: unknown) {
+    if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
   }
 }
 
 function ensureRevokedKeysFile(): void {
   ensureDataDir();
-  if (!existsSync(REVOKED_KEYS_FILE)) {
-    writeFileSync(REVOKED_KEYS_FILE, '{"keys":[]}', "utf-8");
+  try {
+    writeFileSync(REVOKED_KEYS_FILE, '{"keys":[]}', {
+      encoding: "utf-8",
+      flag: "wx",
+    });
+  } catch (err: unknown) {
+    if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
   }
 }
 
@@ -147,8 +154,7 @@ export function generateDevKey(
   const payload = JSON.stringify({ u: username, e: expiration, n: nonce });
   const signature = createHmac("sha256", secret)
     .update(payload)
-    .digest("base64url")
-    .slice(0, 8);
+    .digest("base64url");
 
   const encoded = Buffer.from(payload).toString("base64url");
   return `${encoded}.${signature}`;
@@ -178,8 +184,7 @@ export function getKeyInfo(key: string): KeyInfo {
 
   const expectedSignature = createHmac("sha256", secret)
     .update(payload)
-    .digest("base64url")
-    .slice(0, 8);
+    .digest("base64url");
 
   if (providedSignature !== expectedSignature) {
     return { valid: false, error: "Invalid signature" };
@@ -235,8 +240,7 @@ export function validateDevKey(
 
   const expectedSignature = createHmac("sha256", secret)
     .update(payload)
-    .digest("base64url")
-    .slice(0, 8);
+    .digest("base64url");
 
   if (providedSignature !== expectedSignature) {
     return { valid: false, error: "invalid_signature" };
