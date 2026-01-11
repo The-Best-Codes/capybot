@@ -5,17 +5,12 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { buildContext } from "../utils/ai/context/index";
+import { requireDevAuth } from "../utils/auth/devCommandGuard";
 
 export default {
   data: new SlashCommandBuilder()
     .setName("dev_context")
     .setDescription("Get the full AI context for a message")
-    .addStringOption((option) =>
-      option
-        .setName("dev_key")
-        .setDescription("Development key")
-        .setRequired(true),
-    )
     .addStringOption((option) =>
       option
         .setName("message_id")
@@ -28,14 +23,8 @@ export default {
   async execute(data: { interaction: ChatInputCommandInteraction }) {
     const interaction = data.interaction;
 
-    const devKey = interaction.options.getString("dev_key");
-    if (devKey !== process.env.DEV_KEY) {
-      await interaction.reply({
-        content: "Invalid development key.",
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
-    }
+    const isAuthed = await requireDevAuth(interaction);
+    if (!isAuthed) return;
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
