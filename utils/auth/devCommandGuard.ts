@@ -1,7 +1,4 @@
-import {
-  ChatInputCommandInteraction,
-  MessageFlags,
-} from "discord.js";
+import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import { checkDevAuth } from "./devAuth";
 
 export async function requireDevAuth(
@@ -28,7 +25,6 @@ export async function requireDevAuth(
     message =
       "This command requires developer authentication. Please login first.";
   }
-
 
   await interaction.reply({
     content: `${message}\n\nUse the \`/devlogin\` command to authenticate.`,

@@ -1,6 +1,6 @@
 import {
-  ActionRowBuilder,
   ChatInputCommandInteraction,
+  LabelBuilder,
   MessageFlags,
   ModalBuilder,
   ModalSubmitInteraction,
@@ -25,15 +25,15 @@ export function createLoginModal(): ModalBuilder {
 
   const keyInput = new TextInputBuilder()
     .setCustomId(DEV_KEY_INPUT_ID)
-    .setLabel("Developer Key")
     .setPlaceholder("Enter your CapyBot developer key")
     .setStyle(TextInputStyle.Short)
     .setRequired(true);
 
-  const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
-    keyInput,
-  );
-  modal.addComponents(actionRow);
+  const label = new LabelBuilder()
+    .setLabel("Developer Key")
+    .setTextInputComponent(keyInput);
+
+  modal.addLabelComponents(label);
 
   return modal;
 }
@@ -60,6 +60,10 @@ export async function handleLoginModal(
       case "wrong_user":
         errorMessage = `This key was issued for a different user. Please use your own key.`;
         break;
+      case "revoked":
+        errorMessage =
+          "This developer key has been revoked. Please request a new one.";
+        break;
       default:
         errorMessage = "Authentication failed.";
     }
@@ -80,6 +84,33 @@ export async function handleLoginModal(
 
   await interaction.reply({
     content: `Successfully logged in as a CapyBot developer!\n${expiryMessage}`,
+    flags: MessageFlags.Ephemeral,
+  });
+}
+
+async function showStatus(
+  interaction: ChatInputCommandInteraction,
+): Promise<void> {
+  const authResult = checkDevAuth(
+    interaction.user.id,
+    interaction.user.username,
+  );
+
+  if (!authResult.loggedIn) {
+    await interaction.reply({
+      content: "You are not logged in as a developer.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const expiryMessage =
+    authResult.daysRemaining !== null
+      ? `Your session expires in **${authResult.daysRemaining} day${authResult.daysRemaining === 1 ? "" : "s"}**.`
+      : "Your session **never expires** unless manually revoked.";
+
+  await interaction.reply({
+    content: `Logged in as **${authResult.username}**.\n${expiryMessage}`,
     flags: MessageFlags.Ephemeral,
   });
 }
@@ -105,28 +136,7 @@ export default {
     const action = interaction.options.getString("action") || "login";
 
     if (action === "status") {
-      const authResult = checkDevAuth(
-        interaction.user.id,
-        interaction.user.username,
-      );
-
-      if (!authResult.loggedIn) {
-        await interaction.reply({
-          content: "You are not logged in as a developer.",
-          flags: MessageFlags.Ephemeral,
-        });
-        return;
-      }
-
-      const expiryMessage =
-        authResult.daysRemaining !== null
-          ? `Your session expires in **${authResult.daysRemaining} day${authResult.daysRemaining === 1 ? "" : "s"}**.`
-          : "Your session **never expires** unless manually revoked.";
-
-      await interaction.reply({
-        content: `Logged in as **${authResult.username}**.\n${expiryMessage}`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await showStatus(interaction);
       return;
     }
 
@@ -136,6 +146,16 @@ export default {
         content: "Successfully logged out.",
         flags: MessageFlags.Ephemeral,
       });
+      return;
+    }
+
+    const authResult = checkDevAuth(
+      interaction.user.id,
+      interaction.user.username,
+    );
+
+    if (authResult.loggedIn) {
+      await showStatus(interaction);
       return;
     }
 

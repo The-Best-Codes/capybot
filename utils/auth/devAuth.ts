@@ -2,7 +2,9 @@ import { createHmac } from "crypto";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { dirname, join } from "path";
 
-const SESSIONS_FILE = join(process.cwd(), "data", "dev_sessions.json");
+const DATA_DIR = join(process.cwd(), "data");
+const SESSIONS_FILE = join(DATA_DIR, "dev_sessions.json");
+const REVOKED_KEYS_FILE = join(DATA_DIR, "dev_revoked_keys.json");
 
 interface DevSession {
   key: string;
@@ -13,21 +15,45 @@ interface SessionStore {
   [discordUserId: string]: DevSession;
 }
 
+interface RevokedKeysStore {
+  keys: string[];
+}
+
 export interface KeyValidationResult {
   valid: boolean;
-  error?: "invalid_signature" | "expired" | "wrong_user";
+  error?: "invalid_signature" | "expired" | "wrong_user" | "revoked";
   username?: string;
   expiresAt?: number | null;
   daysRemaining?: number | null;
 }
 
-function ensureSessionsFile(): void {
-  const dir = dirname(SESSIONS_FILE);
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
+export interface KeyInfo {
+  valid: boolean;
+  username?: string;
+  expiresAt?: number | null;
+  neverExpires?: boolean;
+  expired?: boolean;
+  revoked?: boolean;
+  error?: string;
+}
+
+function ensureDataDir(): void {
+  if (!existsSync(DATA_DIR)) {
+    mkdirSync(DATA_DIR, { recursive: true });
   }
+}
+
+function ensureSessionsFile(): void {
+  ensureDataDir();
   if (!existsSync(SESSIONS_FILE)) {
     writeFileSync(SESSIONS_FILE, "{}", "utf-8");
+  }
+}
+
+function ensureRevokedKeysFile(): void {
+  ensureDataDir();
+  if (!existsSync(REVOKED_KEYS_FILE)) {
+    writeFileSync(REVOKED_KEYS_FILE, '{"keys":[]}', "utf-8");
   }
 }
 
@@ -43,6 +69,63 @@ function loadSessions(): SessionStore {
 function saveSessions(sessions: SessionStore): void {
   ensureSessionsFile();
   writeFileSync(SESSIONS_FILE, JSON.stringify(sessions, null, 2), "utf-8");
+}
+
+function loadRevokedKeys(): RevokedKeysStore {
+  ensureRevokedKeysFile();
+  try {
+    return JSON.parse(readFileSync(REVOKED_KEYS_FILE, "utf-8"));
+  } catch {
+    return { keys: [] };
+  }
+}
+
+function saveRevokedKeys(store: RevokedKeysStore): void {
+  ensureRevokedKeysFile();
+  writeFileSync(REVOKED_KEYS_FILE, JSON.stringify(store, null, 2), "utf-8");
+}
+
+export function isKeyRevoked(key: string): boolean {
+  const store = loadRevokedKeys();
+  return store.keys.includes(key);
+}
+
+export function revokeKey(key: string): boolean {
+  const store = loadRevokedKeys();
+  if (store.keys.includes(key)) {
+    return false;
+  }
+  store.keys.push(key);
+  saveRevokedKeys(store);
+
+  const sessions = loadSessions();
+  for (const userId of Object.keys(sessions)) {
+    if (sessions[userId].key === key) {
+      delete sessions[userId];
+    }
+  }
+  saveSessions(sessions);
+
+  return true;
+}
+
+export function revokeUserSessions(username: string): number {
+  const sessions = loadSessions();
+  const normalizedUsername = username.toLowerCase().replace(/^@/, "");
+  let count = 0;
+
+  for (const userId of Object.keys(sessions)) {
+    const keyInfo = getKeyInfo(sessions[userId].key);
+    if (
+      keyInfo.username &&
+      keyInfo.username.toLowerCase().replace(/^@/, "") === normalizedUsername
+    ) {
+      revokeKey(sessions[userId].key);
+      count++;
+    }
+  }
+
+  return count;
 }
 
 export function generateDevKey(
@@ -67,6 +150,60 @@ export function generateDevKey(
 
   const encoded = Buffer.from(payload).toString("base64url");
   return `${encoded}.${signature}`;
+}
+
+export function getKeyInfo(key: string): KeyInfo {
+  const secret = process.env.DEV_AUTH_SECRET;
+  if (!secret) {
+    return { valid: false, error: "DEV_AUTH_SECRET is not set" };
+  }
+
+  const parts = key.split(".");
+  if (parts.length !== 2) {
+    return { valid: false, error: "Invalid key format" };
+  }
+
+  const [encoded, providedSignature] = parts;
+
+  let payload: string;
+  let parsed: { u: string; e: number };
+  try {
+    payload = Buffer.from(encoded, "base64url").toString("utf-8");
+    parsed = JSON.parse(payload);
+  } catch {
+    return { valid: false, error: "Invalid key encoding" };
+  }
+
+  const expectedSignature = createHmac("sha256", secret)
+    .update(payload)
+    .digest("base64url")
+    .slice(0, 8);
+
+  if (providedSignature !== expectedSignature) {
+    return { valid: false, error: "Invalid signature" };
+  }
+
+  if (isKeyRevoked(key)) {
+    return {
+      valid: false,
+      revoked: true,
+      username: parsed.u,
+      expiresAt: parsed.e === 0 ? null : parsed.e,
+      error: "Key has been revoked",
+    };
+  }
+
+  const neverExpires = parsed.e === 0;
+  const expired = !neverExpires && Date.now() > parsed.e;
+
+  return {
+    valid: !expired,
+    username: parsed.u,
+    expiresAt: neverExpires ? null : parsed.e,
+    neverExpires,
+    expired,
+    revoked: false,
+  };
 }
 
 export function validateDevKey(
@@ -101,6 +238,10 @@ export function validateDevKey(
 
   if (providedSignature !== expectedSignature) {
     return { valid: false, error: "invalid_signature" };
+  }
+
+  if (isKeyRevoked(key)) {
+    return { valid: false, error: "revoked", username: parsed.u };
   }
 
   const username = parsed.u;
