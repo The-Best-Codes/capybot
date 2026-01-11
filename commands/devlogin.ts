@@ -9,10 +9,10 @@ import {
   TextInputStyle,
 } from "discord.js";
 import {
-  validateDevKey,
-  saveSession,
   checkDevAuth,
   clearSession,
+  saveSession,
+  validateDevKey,
 } from "../utils/auth/devAuth";
 
 export const DEV_LOGIN_MODAL_ID = "dev_login_modal";
@@ -117,7 +117,7 @@ async function showStatus(
 
 export default {
   data: new SlashCommandBuilder()
-    .setName("devlogin")
+    .setName("dev_login")
     .setDescription("Login as a CapyBot developer")
     .addStringOption((option) =>
       option

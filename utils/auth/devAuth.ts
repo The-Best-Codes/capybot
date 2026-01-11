@@ -1,6 +1,6 @@
 import { createHmac } from "crypto";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
-import { dirname, join } from "path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 
 const DATA_DIR = join(process.cwd(), "data");
 const SESSIONS_FILE = join(DATA_DIR, "dev_sessions.json");
