@@ -1,4 +1,4 @@
-import { createHmac } from "crypto";
+import { createHmac, randomBytes } from "crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
@@ -142,7 +142,9 @@ export function generateDevKey(
       ? Date.now() + expirationDays * 24 * 60 * 60 * 1000
       : 0;
 
-  const payload = JSON.stringify({ u: username, e: expiration });
+  const nonce = randomBytes(8).toString("base64url");
+
+  const payload = JSON.stringify({ u: username, e: expiration, n: nonce });
   const signature = createHmac("sha256", secret)
     .update(payload)
     .digest("base64url")

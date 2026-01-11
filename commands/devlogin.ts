@@ -141,9 +141,17 @@ export default {
     }
 
     if (action === "logout") {
+      const wasLoggedIn = checkDevAuth(
+        interaction.user.id,
+        interaction.user.username,
+      ).loggedIn;
+
       clearSession(interaction.user.id);
+
       await interaction.reply({
-        content: "Successfully logged out.",
+        content: wasLoggedIn
+          ? "Successfully logged out."
+          : "You were not logged in.",
         flags: MessageFlags.Ephemeral,
       });
       return;
