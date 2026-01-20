@@ -7,9 +7,15 @@ import { Events } from "discord.js";
 import { registerCommands } from "./.discraft/commands/index";
 import { registerEvents } from "./.discraft/events/index";
 import client from "./clients/discord";
+import { analytics } from "./utils/analytics/index";
 import { logger } from "./utils/logger";
 
 logger.start("Starting bot...");
+
+analytics.initialize().catch((err) => {
+  logger.error("Failed to initialize analytics system.");
+  logger.verbose(err);
+});
 
 // Register events before login
 registerEvents(client)

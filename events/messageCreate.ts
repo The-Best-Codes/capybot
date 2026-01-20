@@ -10,7 +10,9 @@ import { globalModel } from "../clients/ai";
 import { buildContext } from "../utils/ai/context";
 import { IGNORE_PHRASE, systemInstructions } from "../utils/ai/systemPrompt";
 import { createTools } from "../utils/ai/tools";
+import { analytics } from "../utils/analytics/index";
 import { checkDevAuth } from "../utils/auth/devAuth";
+import { hasPermission } from "../utils/auth/permissions";
 import { conversationManager } from "../utils/conversation/manager";
 import { toolCallStore, type ToolCall } from "../utils/db/toolCallsDb";
 import { logger } from "../utils/logger";
@@ -21,6 +23,9 @@ export default {
     client: Client,
     message: OmitPartialGroupDMChannel<Message<boolean>> | Message<boolean>,
   ) => {
+    // Track event
+    analytics.trackEvent({ eventName: Events.MessageCreate }).catch(() => {});
+
     if (message.author.bot) return;
 
     const botId = client.user!.id;
@@ -37,6 +42,14 @@ export default {
         );
         return;
       }
+
+      if (!hasPermission(authResult.permissions, "dm")) {
+        await message.reply(
+          "Your developer key does not have permission to use DMs. Contact an admin to update your key permissions.",
+        );
+        return;
+      }
+
       logger.debug(`Dev DM from ${message.author.username}: ${message.id}`);
     }
 
@@ -65,7 +78,29 @@ export default {
       isReplyToBot,
     );
 
-    if (!decision.process) return;
+    if (!decision.process) {
+      analytics
+        .trackMessage({
+          messageId: message.id,
+          userId: message.author.id,
+          channelId: message.channelId,
+          guildId: message.guildId,
+          isDM,
+          isMentioned,
+          isReply: isReplyToBot,
+          processReason: decision.reason,
+          messageLength: message.content.length,
+          hasAttachments: message.attachments.size > 0,
+          attachmentCount: message.attachments.size,
+          responseGenerated: false,
+        })
+        .catch((err) =>
+          logger.error(`Failed to track message analytics: ${err}`),
+        );
+      return;
+    }
+
+    const messageStartTime = Date.now();
 
     try {
       conversationManager.setGenerating(message.channelId, true);
@@ -83,6 +118,7 @@ export default {
       const prompt = context;
       const tools = createTools(message.channel);
 
+      const aiStartTime = Date.now();
       const result = await generateText({
         model: globalModel,
         prompt,
@@ -90,11 +126,26 @@ export default {
         tools,
         stopWhen: stepCountIs(3),
       });
+      const aiEndTime = Date.now();
 
       const { text } = result;
 
       if (text.includes(IGNORE_PHRASE)) {
         logger.info(`AI Decided to ignore message: ${message.id}`);
+
+        analytics
+          .trackAI({
+            messageId: message.id,
+            modelUsed: globalModel.modelId,
+            toolCallCount: 0,
+            toolsUsed: [],
+            stepCount: result.steps.length,
+            generationTime: aiEndTime - aiStartTime,
+            success: true,
+            decisionReason: "ignored",
+          })
+          .catch((err) => logger.error(`Failed to track AI analytics: ${err}`));
+
         conversationManager.setGenerating(message.channelId, false);
         return;
       }
@@ -143,9 +194,71 @@ export default {
         logger.info(`No text generated for message ${message.id}`);
       }
 
+      const messageEndTime = Date.now();
+
+      analytics
+        .trackMessage({
+          messageId: message.id,
+          userId: message.author.id,
+          channelId: message.channelId,
+          guildId: message.guildId,
+          isDM,
+          isMentioned,
+          isReply: isReplyToBot,
+          processReason: decision.reason,
+          messageLength: message.content.length,
+          hasAttachments: message.attachments.size > 0,
+          attachmentCount: message.attachments.size,
+          responseGenerated: !!text,
+          responseTime: messageEndTime - messageStartTime,
+        })
+        .catch((err) =>
+          logger.error(`Failed to track message analytics: ${err}`),
+        );
+
+      const toolsUsed = Array.from(
+        new Set(allToolCalls.map((tc) => tc.toolName)),
+      );
+      analytics
+        .trackAI({
+          messageId: message.id,
+          modelUsed: globalModel.modelId,
+          toolCallCount: allToolCalls.length,
+          toolsUsed,
+          stepCount: result.steps.length,
+          generationTime: aiEndTime - aiStartTime,
+          success: true,
+          decisionReason: decision.reason,
+        })
+        .catch((err) => logger.error(`Failed to track AI analytics: ${err}`));
+
       conversationManager.markInteraction(message.channelId, message.author.id);
     } catch (error) {
       logger.error(`Error generating AI response: ${error}`);
+
+      const messageEndTime = Date.now();
+
+      analytics
+        .trackMessage({
+          messageId: message.id,
+          userId: message.author.id,
+          channelId: message.channelId,
+          guildId: message.guildId,
+          isDM,
+          isMentioned,
+          isReply: isReplyToBot,
+          processReason: decision.reason,
+          messageLength: message.content.length,
+          hasAttachments: message.attachments.size > 0,
+          attachmentCount: message.attachments.size,
+          responseGenerated: false,
+          responseTime: messageEndTime - messageStartTime,
+          error: error instanceof Error ? error.message : String(error),
+        })
+        .catch((err) =>
+          logger.error(`Failed to track message analytics: ${err}`),
+        );
+
       conversationManager.setGenerating(message.channelId, false);
     }
   },

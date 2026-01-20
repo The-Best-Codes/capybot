@@ -1,6 +1,7 @@
 import { createHmac, randomBytes } from "crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+import type { DevPermission } from "./permissions";
 
 const DATA_DIR = join(process.cwd(), "data");
 const SESSIONS_FILE = join(DATA_DIR, "dev_sessions.json");
@@ -25,6 +26,7 @@ export interface KeyValidationResult {
   username?: string;
   expiresAt?: number | null;
   daysRemaining?: number | null;
+  permissions?: DevPermission[];
 }
 
 export interface KeyInfo {
@@ -35,6 +37,7 @@ export interface KeyInfo {
   expired?: boolean;
   revoked?: boolean;
   error?: string;
+  permissions?: DevPermission[];
 }
 
 function ensureDataDir(): void {
@@ -138,6 +141,7 @@ export function revokeUserSessions(username: string): number {
 export function generateDevKey(
   username: string,
   expirationDays?: number,
+  permissions?: DevPermission[],
 ): string {
   const secret = process.env.DEV_AUTH_SECRET;
   if (!secret) {
@@ -151,7 +155,12 @@ export function generateDevKey(
 
   const nonce = randomBytes(8).toString("base64url");
 
-  const payload = JSON.stringify({ u: username, e: expiration, n: nonce });
+  const payload = JSON.stringify({
+    u: username,
+    e: expiration,
+    n: nonce,
+    p: permissions || [],
+  });
   const signature = createHmac("sha256", secret)
     .update(payload)
     .digest("base64url");
@@ -174,7 +183,7 @@ export function getKeyInfo(key: string): KeyInfo {
   const [encoded, providedSignature] = parts;
 
   let payload: string;
-  let parsed: { u: string; e: number };
+  let parsed: { u: string; e: number; p?: DevPermission[] };
   try {
     payload = Buffer.from(encoded, "base64url").toString("utf-8");
     parsed = JSON.parse(payload);
@@ -196,6 +205,7 @@ export function getKeyInfo(key: string): KeyInfo {
       revoked: true,
       username: parsed.u,
       expiresAt: parsed.e === 0 ? null : parsed.e,
+      permissions: parsed.p || [],
       error: "Key has been revoked",
     };
   }
@@ -210,6 +220,7 @@ export function getKeyInfo(key: string): KeyInfo {
     neverExpires,
     expired,
     revoked: false,
+    permissions: parsed.p || [],
   };
 }
 
@@ -230,7 +241,7 @@ export function validateDevKey(
   const [encoded, providedSignature] = parts;
 
   let payload: string;
-  let parsed: { u: string; e: number };
+  let parsed: { u: string; e: number; p?: DevPermission[] };
   try {
     payload = Buffer.from(encoded, "base64url").toString("utf-8");
     parsed = JSON.parse(payload);
@@ -247,7 +258,12 @@ export function validateDevKey(
   }
 
   if (isKeyRevoked(key)) {
-    return { valid: false, error: "revoked", username: parsed.u };
+    return {
+      valid: false,
+      error: "revoked",
+      username: parsed.u,
+      permissions: parsed.p || [],
+    };
   }
 
   const username = parsed.u;
@@ -259,12 +275,17 @@ export function validateDevKey(
     .replace(/^@/, "");
 
   if (normalizedKeyUsername !== normalizedDiscordUsername) {
-    return { valid: false, error: "wrong_user", username };
+    return {
+      valid: false,
+      error: "wrong_user",
+      username,
+      permissions: parsed.p || [],
+    };
   }
 
   if (expiration !== 0) {
     if (Date.now() > expiration) {
-      return { valid: false, error: "expired" };
+      return { valid: false, error: "expired", permissions: parsed.p || [] };
     }
 
     const daysRemaining = Math.ceil(
@@ -275,6 +296,7 @@ export function validateDevKey(
       username,
       expiresAt: expiration,
       daysRemaining,
+      permissions: parsed.p || [],
     };
   }
 
@@ -283,6 +305,7 @@ export function validateDevKey(
     username,
     expiresAt: null,
     daysRemaining: null,
+    permissions: parsed.p || [],
   };
 }
 
