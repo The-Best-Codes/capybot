@@ -1,7 +1,7 @@
 {
   "name": "capybot",
   "private": true,
-  "version": "0.1.0-beta.7",
+  "version": "0.1.0-beta.8",
   "description": "CapyBot is CapyBot. He's indescribable.",
   "module": "index.ts",
   "type": "module",
@@ -14,13 +14,13 @@
   },
   "devDependencies": {
     "discraft": "^1.7.11",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.6",
-    "@openrouter/ai-sdk-provider": "^6.0.0-alpha.1",
-    "ai": "^6.0.27",
+    "@ai-sdk/google": "^3.0.10",
+    "@openrouter/ai-sdk-provider": "^2.0.0",
+    "ai": "^6.0.42",
     "commander": "^14.0.2",
     "consola": "^3.4.2",
     "discord.js": "^14.25.1",
