@@ -11,6 +11,7 @@ import { buildContext } from "../utils/ai/context";
 import { IGNORE_PHRASE, systemInstructions } from "../utils/ai/systemPrompt";
 import { createTools } from "../utils/ai/tools";
 import { checkDevAuth } from "../utils/auth/devAuth";
+import { hasPermission } from "../utils/auth/permissions";
 import { conversationManager } from "../utils/conversation/manager";
 import { toolCallStore, type ToolCall } from "../utils/db/toolCallsDb";
 import { logger } from "../utils/logger";
@@ -37,6 +38,14 @@ export default {
         );
         return;
       }
+
+      if (!hasPermission(authResult.permissions, "dm")) {
+        await message.reply(
+          "Your developer key does not have permission to use DMs. Contact an admin to update your key permissions.",
+        );
+        return;
+      }
+
       logger.debug(`Dev DM from ${message.author.username}: ${message.id}`);
     }
 

@@ -1,60 +1,143 @@
 #!/usr/bin/env bun
 import "dotenv/config";
 import { program } from "commander";
+import { confirm, multiselect, select, text } from "@clack/prompts";
 import {
   generateDevKey,
   getKeyInfo,
   revokeKey,
   revokeUserSessions,
 } from "../utils/auth/devAuth";
+import {
+  ALL_PERMISSIONS,
+  PERMISSION_DESCRIPTIONS,
+} from "../utils/auth/permissions";
+import type { DevPermission } from "../utils/auth/permissions";
+import packageJson from "../package.json";
 
 program
   .name("dev-auth")
   .description("CapyBot developer authentication management")
-  .version("1.0.0");
+  .version(packageJson.version || "0.0.0");
 
 program
   .command("generate")
   .description("Generate a new developer key")
-  .argument("<username>", "Discord username")
+  .argument(
+    "[username]",
+    "Discord username (optional, will prompt if not provided)",
+  )
   .option("-e, --expires <days>", "Number of days until key expires")
-  .action((username: string, options: { expires?: string }) => {
-    if (!process.env.DEV_AUTH_SECRET) {
-      console.error("Error: DEV_AUTH_SECRET environment variable is not set");
-      console.error("Add it to your .env file first");
-      process.exit(1);
-    }
+  .option(
+    "-p, --permissions <perms>",
+    "Comma-separated permissions (dm,dev_slash_commands)",
+  )
+  .action(
+    async (
+      username: string | undefined,
+      options: { expires?: string; permissions?: string },
+    ) => {
+      if (!process.env.DEV_AUTH_SECRET) {
+        console.error("Error: DEV_AUTH_SECRET environment variable is not set");
+        console.error("Add it to your .env file first");
+        process.exit(1);
+      }
 
-    const normalizedUsername = username.replace(/^@/, "");
-    const expirationDays = options.expires
-      ? parseInt(options.expires, 10)
-      : undefined;
+      try {
+        // Get username interactively if not provided
+        let finalUsername = username;
+        if (!finalUsername) {
+          finalUsername = (await text({
+            message: "Enter Discord username:",
+            placeholder: "username",
+          })) as string;
 
-    if (expirationDays !== undefined && isNaN(expirationDays)) {
-      console.error("Error: --expires must be a number");
-      process.exit(1);
-    }
+          if (!finalUsername) {
+            console.error("Username is required");
+            process.exit(1);
+          }
+        }
 
-    try {
-      const key = generateDevKey(normalizedUsername, expirationDays);
+        finalUsername = finalUsername.replace(/^@/, "");
 
-      console.log("\nDeveloper key generated successfully\n");
-      console.log(`Username: ${normalizedUsername}`);
-      console.log(
-        `Expires:  ${expirationDays ? `in ${expirationDays} days` : "never"}`,
-      );
-      console.log(`\nKey:\n${key}\n`);
-      console.log(
-        "Share this key securely with the user. They can use /dev_login to authenticate.",
-      );
-    } catch (error) {
-      console.error(
-        "Error generating key:",
-        error instanceof Error ? error.message : error,
-      );
-      process.exit(1);
-    }
-  });
+        // Get expiration interactively if not provided
+        let expirationDays: number | undefined = undefined;
+        if (options.expires) {
+          expirationDays = parseInt(options.expires, 10);
+          if (isNaN(expirationDays)) {
+            console.error("Error: --expires must be a number");
+            process.exit(1);
+          }
+        } else {
+          const promptExpiration = (await confirm({
+            message: "Should this key expire?",
+            initialValue: false,
+          })) as boolean;
+
+          if (promptExpiration) {
+            const expirationStr = (await select({
+              message: "Number of days until expiration:",
+              options: [
+                { value: "7", label: "7 days" },
+                { value: "14", label: "14 days" },
+                { value: "30", label: "30 days" },
+                { value: "60", label: "60 days" },
+                { value: "90", label: "90 days" },
+                { value: "365", label: "1 year" },
+              ],
+              initialValue: "30",
+            })) as string;
+
+            expirationDays = parseInt(expirationStr, 10);
+          }
+        }
+
+        // Get permissions interactively if not provided
+        let permissions: DevPermission[] = [];
+        if (options.permissions) {
+          permissions = options.permissions
+            .split(",")
+            .map((p) => p.trim())
+            .filter((p) =>
+              ALL_PERMISSIONS.includes(p as DevPermission),
+            ) as DevPermission[];
+        } else {
+          const permissionOptions = ALL_PERMISSIONS.map((perm) => ({
+            value: perm,
+            label: `${perm} - ${PERMISSION_DESCRIPTIONS[perm]}`,
+          }));
+
+          const selected = (await multiselect({
+            message: "Select permissions for this key:",
+            options: permissionOptions,
+          })) as DevPermission[] | undefined;
+
+          permissions = selected || [];
+        }
+
+        const key = generateDevKey(finalUsername, expirationDays, permissions);
+
+        console.log("\nDeveloper key generated successfully\n");
+        console.log(`Username:    ${finalUsername}`);
+        console.log(
+          `Expires:     ${expirationDays ? `in ${expirationDays} days` : "never"}`,
+        );
+        console.log(
+          `Permissions: ${permissions.length > 0 ? permissions.join(", ") : "none"}`,
+        );
+        console.log(`\nKey:\n${key}\n`);
+        console.log(
+          "Share this key securely with the user. They can use /dev_login to authenticate.",
+        );
+      } catch (error) {
+        console.error(
+          "Error generating key:",
+          error instanceof Error ? error.message : error,
+        );
+        process.exit(1);
+      }
+    },
+  );
 
 program
   .command("info")
@@ -104,6 +187,14 @@ program
         console.log(`Expired: ${expiresDate.toISOString()}`);
       }
     }
+
+    console.log(
+      `Permissions: ${
+        info.permissions && info.permissions.length > 0
+          ? info.permissions.join(", ")
+          : "none"
+      }`,
+    );
 
     console.log();
   });
