@@ -53,7 +53,7 @@ export default {
           message.channel.messages.cache.get(message.reference.messageId) ||
           (await message.channel.messages.fetch(message.reference.messageId));
         isReplyToBot = repliedMsg.author.id === botId;
-      } catch (error) {
+      } catch {
         isReplyToBot = false;
       }
     }
@@ -140,7 +140,7 @@ export default {
       const allToolCalls: ToolCall[] = [];
       const toolCallIdToResult: Record<string, any> = {};
 
-      result.steps.forEach((step, stepIndex) => {
+      result.steps.forEach((step) => {
         step.toolResults.forEach((tr) => {
           toolCallIdToResult[tr.toolCallId] = tr;
         });

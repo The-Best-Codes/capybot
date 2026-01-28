@@ -48,7 +48,7 @@ async function fetchHistory(
         ...(attachments.length > 0 && { attachments }),
       };
     });
-  } catch (e) {
+  } catch {
     return [];
   }
 }
@@ -76,7 +76,7 @@ async function fetchReferencedMessage(
       referenced_message_id: msg.reference?.messageId || null,
       ...(attachments.length > 0 && { attachments }),
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }

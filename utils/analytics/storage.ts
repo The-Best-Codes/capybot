@@ -2,7 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { logger } from "../logger";
 import { analyticsConfig } from "./config";
-import type { DailyIndex, IndexMetadata } from "./types";
+import type { IndexMetadata } from "./types";
 
 const ANALYTICS_DIR = path.join(process.cwd(), "data", "analytics");
 

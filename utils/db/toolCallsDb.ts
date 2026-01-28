@@ -58,7 +58,7 @@ class ToolCallStore {
       const content = await fs.readFile(filePath, "utf-8");
       const data = JSON.parse(content);
       return data.toolCalls || [];
-    } catch (error) {
+    } catch {
       return [];
     }
   }
