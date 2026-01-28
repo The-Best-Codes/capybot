@@ -1,8 +1,4 @@
-import {
-  ChatInputCommandInteraction,
-  MessageFlags,
-  SlashCommandBuilder,
-} from "discord.js";
+import { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from "discord.js";
 import { toolCallStore } from "../utils/db/toolCallsDb";
 import { requireDevAuth } from "../utils/auth/devCommandGuard";
 

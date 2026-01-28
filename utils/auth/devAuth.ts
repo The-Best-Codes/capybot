@@ -149,9 +149,7 @@ export function generateDevKey(
   }
 
   const expiration =
-    expirationDays !== undefined
-      ? Date.now() + expirationDays * 24 * 60 * 60 * 1000
-      : 0;
+    expirationDays !== undefined ? Date.now() + expirationDays * 24 * 60 * 60 * 1000 : 0;
 
   const nonce = randomBytes(8).toString("base64url");
 
@@ -161,9 +159,7 @@ export function generateDevKey(
     n: nonce,
     p: permissions || [],
   });
-  const signature = createHmac("sha256", secret)
-    .update(payload)
-    .digest("base64url");
+  const signature = createHmac("sha256", secret).update(payload).digest("base64url");
 
   const encoded = Buffer.from(payload).toString("base64url");
   return `${encoded}.${signature}`;
@@ -191,9 +187,7 @@ export function getKeyInfo(key: string): KeyInfo {
     return { valid: false, error: "Invalid key encoding" };
   }
 
-  const expectedSignature = createHmac("sha256", secret)
-    .update(payload)
-    .digest("base64url");
+  const expectedSignature = createHmac("sha256", secret).update(payload).digest("base64url");
 
   if (providedSignature !== expectedSignature) {
     return { valid: false, error: "Invalid signature" };
@@ -224,10 +218,7 @@ export function getKeyInfo(key: string): KeyInfo {
   };
 }
 
-export function validateDevKey(
-  key: string,
-  discordUsername: string,
-): KeyValidationResult {
+export function validateDevKey(key: string, discordUsername: string): KeyValidationResult {
   const secret = process.env.DEV_AUTH_SECRET;
   if (!secret) {
     return { valid: false, error: "invalid_signature" };
@@ -249,9 +240,7 @@ export function validateDevKey(
     return { valid: false, error: "invalid_signature" };
   }
 
-  const expectedSignature = createHmac("sha256", secret)
-    .update(payload)
-    .digest("base64url");
+  const expectedSignature = createHmac("sha256", secret).update(payload).digest("base64url");
 
   if (providedSignature !== expectedSignature) {
     return { valid: false, error: "invalid_signature" };
@@ -270,9 +259,7 @@ export function validateDevKey(
   const expiration = parsed.e;
 
   const normalizedKeyUsername = username.toLowerCase().replace(/^@/, "");
-  const normalizedDiscordUsername = discordUsername
-    .toLowerCase()
-    .replace(/^@/, "");
+  const normalizedDiscordUsername = discordUsername.toLowerCase().replace(/^@/, "");
 
   if (normalizedKeyUsername !== normalizedDiscordUsername) {
     return {
@@ -288,9 +275,7 @@ export function validateDevKey(
       return { valid: false, error: "expired", permissions: parsed.p || [] };
     }
 
-    const daysRemaining = Math.ceil(
-      (expiration - Date.now()) / (24 * 60 * 60 * 1000),
-    );
+    const daysRemaining = Math.ceil((expiration - Date.now()) / (24 * 60 * 60 * 1000));
     return {
       valid: true,
       username,

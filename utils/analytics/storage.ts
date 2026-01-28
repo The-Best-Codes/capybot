@@ -25,16 +25,11 @@ export class AnalyticsStorage {
       this.initialized = true;
       logger.debug(`[Analytics] Storage initialized for ${this.category}`);
     } catch (error) {
-      logger.error(
-        `Failed to initialize analytics storage for ${this.category}: ${error}`,
-      );
+      logger.error(`Failed to initialize analytics storage for ${this.category}: ${error}`);
     }
   }
 
-  async save<T extends { id: string; timestamp: number }>(
-    data: T,
-    type: string,
-  ): Promise<void> {
+  async save<T extends { id: string; timestamp: number }>(data: T, type: string): Promise<void> {
     if (!this.initialized) await this.initialize();
 
     const config = analyticsConfig.get();
@@ -163,9 +158,7 @@ export class AnalyticsStorage {
     try {
       const now = Date.now();
       const retentionMs = retentionDays * 24 * 60 * 60 * 1000;
-      const cutoffDate = new Date(now - retentionMs)
-        .toISOString()
-        .split("T")[0];
+      const cutoffDate = new Date(now - retentionMs).toISOString().split("T")[0];
 
       let deletedCount = 0;
 
@@ -194,9 +187,7 @@ export class AnalyticsStorage {
         const content = await fs.readFile(filePath, "utf-8");
         const records = JSON.parse(content);
 
-        const filtered = records.filter(
-          (r: any) => now - r.timestamp <= retentionMs,
-        );
+        const filtered = records.filter((r: any) => now - r.timestamp <= retentionMs);
 
         if (filtered.length === 0) {
           await fs.unlink(filePath);
@@ -205,9 +196,7 @@ export class AnalyticsStorage {
         }
       }
 
-      logger.debug(
-        `[Analytics] Pruned ${deletedCount} old files from ${this.category}`,
-      );
+      logger.debug(`[Analytics] Pruned ${deletedCount} old files from ${this.category}`);
       return deletedCount;
     } catch (error) {
       logger.error(`Failed to prune analytics for ${this.category}: ${error}`);

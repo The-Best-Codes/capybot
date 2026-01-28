@@ -34,9 +34,7 @@ async function fetchHistory(
       dictionary.registerUser(msg.member || msg.author);
 
       msg.mentions.users.forEach((u) => dictionary.registerUser(u));
-      msg.mentions.channels.forEach((c) =>
-        dictionary.registerChannel(c as any),
-      );
+      msg.mentions.channels.forEach((c) => dictionary.registerChannel(c as any));
       msg.mentions.roles.forEach((r) => dictionary.registerRole(r));
 
       const attachments = msg.attachments.map(serializeAttachment);
@@ -89,9 +87,7 @@ export async function buildContext(message: Message<boolean>): Promise<string> {
 
   dictionary.registerUser(message.member || author);
   message.mentions.users.forEach((u) => dictionary.registerUser(u));
-  message.mentions.channels.forEach((c) =>
-    dictionary.registerChannel(c as any),
-  );
+  message.mentions.channels.forEach((c) => dictionary.registerChannel(c as any));
   message.mentions.roles.forEach((r) => dictionary.registerRole(r));
 
   const rawHistory = await fetchHistory(channel, dictionary);
@@ -118,9 +114,7 @@ export async function buildContext(message: Message<boolean>): Promise<string> {
   }
 
   const historyIds = new Set(historyWithTools.map((h) => h.id));
-  const missingReferencedIds = Array.from(referencedMessageIds).filter(
-    (id) => !historyIds.has(id),
-  );
+  const missingReferencedIds = Array.from(referencedMessageIds).filter((id) => !historyIds.has(id));
 
   for (const refId of missingReferencedIds) {
     const refMsg = await fetchReferencedMessage(channel, refId, dictionary);

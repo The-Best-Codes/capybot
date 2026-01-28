@@ -13,14 +13,10 @@ export default {
     if (!isAuthed) return;
 
     const nickname = interaction.inGuild()
-      ? (interaction.member as any)?.nickname ||
-        (interaction.member as any)?.nick
+      ? (interaction.member as any)?.nickname || (interaction.member as any)?.nick
       : null;
-    const displayName =
-      nickname || interaction.user.displayName || interaction.user.username;
+    const displayName = nickname || interaction.user.displayName || interaction.user.username;
 
-    await interaction.reply(
-      `**${displayName}** has CapyBot developer access. So cool! ✨`,
-    );
+    await interaction.reply(`**${displayName}** has CapyBot developer access. So cool! ✨`);
   },
 };

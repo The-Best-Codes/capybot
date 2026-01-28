@@ -8,12 +8,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
-import {
-  checkDevAuth,
-  clearSession,
-  saveSession,
-  validateDevKey,
-} from "../utils/auth/devAuth";
+import { checkDevAuth, clearSession, saveSession, validateDevKey } from "../utils/auth/devAuth";
 
 export const DEV_LOGIN_MODAL_ID = "dev_login_modal";
 export const DEV_KEY_INPUT_ID = "dev_key_input";
@@ -29,18 +24,14 @@ export function createLoginModal(): ModalBuilder {
     .setStyle(TextInputStyle.Short)
     .setRequired(true);
 
-  const label = new LabelBuilder()
-    .setLabel("Developer Key")
-    .setTextInputComponent(keyInput);
+  const label = new LabelBuilder().setLabel("Developer Key").setTextInputComponent(keyInput);
 
   modal.addLabelComponents(label);
 
   return modal;
 }
 
-export async function handleLoginModal(
-  interaction: ModalSubmitInteraction,
-): Promise<void> {
+export async function handleLoginModal(interaction: ModalSubmitInteraction): Promise<void> {
   const key = interaction.fields.getTextInputValue(DEV_KEY_INPUT_ID);
   const username = interaction.user.username;
 
@@ -54,15 +45,13 @@ export async function handleLoginModal(
         errorMessage = "Invalid developer key. Please check and try again.";
         break;
       case "expired":
-        errorMessage =
-          "This developer key has expired. Please request a new one.";
+        errorMessage = "This developer key has expired. Please request a new one.";
         break;
       case "wrong_user":
         errorMessage = `This key was issued for a different user. Please use your own key.`;
         break;
       case "revoked":
-        errorMessage =
-          "This developer key has been revoked. Please request a new one.";
+        errorMessage = "This developer key has been revoked. Please request a new one.";
         break;
       default:
         errorMessage = "Authentication failed.";
@@ -88,13 +77,8 @@ export async function handleLoginModal(
   });
 }
 
-async function showStatus(
-  interaction: ChatInputCommandInteraction,
-): Promise<void> {
-  const authResult = checkDevAuth(
-    interaction.user.id,
-    interaction.user.username,
-  );
+async function showStatus(interaction: ChatInputCommandInteraction): Promise<void> {
+  const authResult = checkDevAuth(interaction.user.id, interaction.user.username);
 
   if (!authResult.loggedIn) {
     await interaction.reply({
@@ -141,26 +125,18 @@ export default {
     }
 
     if (action === "logout") {
-      const wasLoggedIn = checkDevAuth(
-        interaction.user.id,
-        interaction.user.username,
-      ).loggedIn;
+      const wasLoggedIn = checkDevAuth(interaction.user.id, interaction.user.username).loggedIn;
 
       clearSession(interaction.user.id);
 
       await interaction.reply({
-        content: wasLoggedIn
-          ? "Successfully logged out."
-          : "You were not logged in.",
+        content: wasLoggedIn ? "Successfully logged out." : "You were not logged in.",
         flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
-    const authResult = checkDevAuth(
-      interaction.user.id,
-      interaction.user.username,
-    );
+    const authResult = checkDevAuth(interaction.user.id, interaction.user.username);
 
     if (authResult.loggedIn) {
       await showStatus(interaction);

@@ -80,9 +80,7 @@ class ConversationManager {
           .sort((a, b) => b.createdTimestamp - a.createdTimestamp)
           .first(CONFIG.MAX_MESSAGE_DISTANCE);
 
-        const botSpokeRecently = recentMessages.some(
-          (m) => m.author.id === botId,
-        );
+        const botSpokeRecently = recentMessages.some((m) => m.author.id === botId);
 
         if (!botSpokeRecently) {
           return { process: false, reason: "cold_channel_distance" };

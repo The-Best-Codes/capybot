@@ -1,11 +1,5 @@
 import { generateText, stepCountIs } from "ai";
-import {
-  ChannelType,
-  Client,
-  Events,
-  Message,
-  type OmitPartialGroupDMChannel,
-} from "discord.js";
+import { ChannelType, Client, Events, Message, type OmitPartialGroupDMChannel } from "discord.js";
 import { globalModel } from "../clients/ai";
 import { buildContext } from "../utils/ai/context";
 import { IGNORE_PHRASE, systemInstructions } from "../utils/ai/systemPrompt";
@@ -32,10 +26,7 @@ export default {
     const isDM = message.channel.type === ChannelType.DM;
 
     if (isDM) {
-      const authResult = checkDevAuth(
-        message.author.id,
-        message.author.username,
-      );
+      const authResult = checkDevAuth(message.author.id, message.author.username);
       if (!authResult.loggedIn) {
         await message.reply(
           "Sign in as a CapyBot developer to use CapyBot in DMs. Use `/dev_login` in a server first.",
@@ -94,9 +85,7 @@ export default {
           attachmentCount: message.attachments.size,
           responseGenerated: false,
         })
-        .catch((err) =>
-          logger.error(`Failed to track message analytics: ${err}`),
-        );
+        .catch((err) => logger.error(`Failed to track message analytics: ${err}`));
       return;
     }
 
@@ -105,9 +94,7 @@ export default {
     try {
       conversationManager.setGenerating(message.channelId, true);
 
-      const isExplicit = ["explicit_ping", "keyword_trigger"].includes(
-        decision.reason,
-      );
+      const isExplicit = ["explicit_ping", "keyword_trigger"].includes(decision.reason);
       if (isExplicit && "sendTyping" in message.channel) {
         message.channel.sendTyping();
       }
@@ -179,9 +166,7 @@ export default {
 
       if (allToolCalls.length > 0) {
         toolCallStore.save(message.id, allToolCalls).catch((error) => {
-          logger.error(
-            `Failed to save tool calls for message ${message.id}: ${error}`,
-          );
+          logger.error(`Failed to save tool calls for message ${message.id}: ${error}`);
         });
       }
 
@@ -212,13 +197,9 @@ export default {
           responseGenerated: !!text,
           responseTime: messageEndTime - messageStartTime,
         })
-        .catch((err) =>
-          logger.error(`Failed to track message analytics: ${err}`),
-        );
+        .catch((err) => logger.error(`Failed to track message analytics: ${err}`));
 
-      const toolsUsed = Array.from(
-        new Set(allToolCalls.map((tc) => tc.toolName)),
-      );
+      const toolsUsed = Array.from(new Set(allToolCalls.map((tc) => tc.toolName)));
       analytics
         .trackAI({
           messageId: message.id,
@@ -255,9 +236,7 @@ export default {
           responseTime: messageEndTime - messageStartTime,
           error: error instanceof Error ? error.message : String(error),
         })
-        .catch((err) =>
-          logger.error(`Failed to track message analytics: ${err}`),
-        );
+        .catch((err) => logger.error(`Failed to track message analytics: ${err}`));
 
       conversationManager.setGenerating(message.channelId, false);
     }

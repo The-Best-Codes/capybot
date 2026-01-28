@@ -35,8 +35,7 @@ export class AnalyticsQueries {
     const successCount = allCommands.filter((c) => c.success).length;
     const successRate = totalCommands > 0 ? successCount / totalCommands : 0;
 
-    const byCommand: Record<string, { count: number; successRate: number }> =
-      {};
+    const byCommand: Record<string, { count: number; successRate: number }> = {};
     allCommands.forEach((cmd) => {
       if (!byCommand[cmd.commandName]) {
         byCommand[cmd.commandName] = { count: 0, successRate: 0 };
@@ -137,8 +136,7 @@ export class AnalyticsQueries {
 
     const totalGenerations = allAI.length;
     const successCount = allAI.filter((ai) => ai.success).length;
-    const successRate =
-      totalGenerations > 0 ? successCount / totalGenerations : 0;
+    const successRate = totalGenerations > 0 ? successCount / totalGenerations : 0;
 
     const generationTimes = allAI.map((ai) => ai.generationTime);
     const avgGenerationTime =
@@ -168,10 +166,7 @@ export class AnalyticsQueries {
 
     const toolUsage = Array.from(toolUsageMap.values());
 
-    const totalTokens = allAI.reduce(
-      (sum, ai) => sum + (ai.totalTokens || 0),
-      0,
-    );
+    const totalTokens = allAI.reduce((sum, ai) => sum + (ai.totalTokens || 0), 0);
 
     const byModel: Record<string, number> = {};
     allAI.forEach((ai) => {
@@ -225,14 +220,9 @@ export class AnalyticsQueries {
     startDate: string,
     endDate: string,
     limit: number = 10,
-  ): Promise<
-    Array<{ userId: string; messageCount: number; commandCount: number }>
-  > {
+  ): Promise<Array<{ userId: string; messageCount: number; commandCount: number }>> {
     const dates = this.getDateRange(startDate, endDate);
-    const userActivity = new Map<
-      string,
-      { messageCount: number; commandCount: number }
-    >();
+    const userActivity = new Map<string, { messageCount: number; commandCount: number }>();
 
     for (const date of dates) {
       const messages = await analytics.getMessagesByDate(date);
@@ -255,10 +245,7 @@ export class AnalyticsQueries {
 
     return Array.from(userActivity.entries())
       .map(([userId, activity]) => ({ userId, ...activity }))
-      .sort(
-        (a, b) =>
-          b.messageCount + b.commandCount - (a.messageCount + a.commandCount),
-      )
+      .sort((a, b) => b.messageCount + b.commandCount - (a.messageCount + a.commandCount))
       .slice(0, limit);
   }
 
