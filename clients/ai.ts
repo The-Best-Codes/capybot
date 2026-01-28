@@ -8,6 +8,6 @@ export const heliconeProvider = createOpenAICompatible({
 });
 
 // export const globalModel = openrouter("xiaomi/mimo-v2-flash:free");
-export const globalModel = heliconeProvider("claude-4.5-haiku");
+export const globalModel = heliconeProvider("gemini-3-flash-preview");
 // export const attachmentModel = openrouter("nvidia/nemotron-nano-12b-v2-vl:free");
 export const attachmentModel = heliconeProvider("gemini-2.5-flash-lite");
