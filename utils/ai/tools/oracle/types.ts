@@ -36,6 +36,138 @@ export interface SerializedUser {
   joinedAt: string | null;
 }
 
+export interface SerializedReaction {
+  emoji: string;
+  emojiId: string | null;
+  count: number;
+  me: boolean;
+}
+
+export interface SerializedEmbed {
+  title: string | null;
+  description: string | null;
+  url: string | null;
+  color: number | null;
+  timestamp: string | null;
+  footer: string | null;
+  imageUrl: string | null;
+  thumbnailUrl: string | null;
+  authorName: string | null;
+  fields: { name: string; value: string; inline: boolean }[];
+}
+
+export interface SerializedAttachment {
+  id: string;
+  name: string;
+  url: string;
+  size: number;
+  contentType: string | null;
+  width: number | null;
+  height: number | null;
+}
+
+export interface SerializedSticker {
+  id: string;
+  name: string;
+  formatType: string;
+}
+
+export interface SerializedMention {
+  users: { id: string; username: string }[];
+  roles: { id: string; name: string }[];
+  channels: { id: string; name: string }[];
+  everyone: boolean;
+}
+
+export interface DetailedMessage extends SerializedMessage {
+  editedTimestamp: string | null;
+  isPinned: boolean;
+  reactions: SerializedReaction[];
+  embeds: SerializedEmbed[];
+  attachments: SerializedAttachment[];
+  stickers: SerializedSticker[];
+  mentions: SerializedMention;
+  replyTo: {
+    messageId: string;
+    authorId: string;
+    authorUsername: string;
+    contentPreview: string;
+  } | null;
+  thread: {
+    id: string;
+    name: string;
+    messageCount: number;
+  } | null;
+  type: string;
+  url: string;
+}
+
+export interface SerializedPermissionOverwrite {
+  id: string;
+  type: "role" | "member";
+  name: string | null;
+  allow: string[];
+  deny: string[];
+}
+
+export interface DetailedChannel extends SerializedChannel {
+  nsfw: boolean;
+  rateLimitPerUser: number | null;
+  lastMessageId: string | null;
+  lastMessageTimestamp: string | null;
+  createdAt: string;
+  permissionOverwrites: SerializedPermissionOverwrite[];
+  threadMetadata: {
+    archived: boolean;
+    locked: boolean;
+    autoArchiveDuration: number | null;
+    ownerId: string | null;
+    ownerUsername: string | null;
+    messageCount: number;
+    memberCount: number;
+  } | null;
+  voiceInfo: {
+    bitrate: number;
+    userLimit: number;
+    rtcRegion: string | null;
+  } | null;
+}
+
+export interface DetailedUser extends SerializedUser {
+  avatarUrl: string | null;
+  bannerUrl: string | null;
+  accentColor: number | null;
+  accountCreatedAt: string;
+  premiumSince: string | null;
+  communicationDisabledUntil: string | null;
+  pending: boolean;
+  permissions: string[];
+  voiceState: {
+    channelId: string | null;
+    channelName: string | null;
+    selfMute: boolean;
+    selfDeaf: boolean;
+    serverMute: boolean;
+    serverDeaf: boolean;
+    streaming: boolean;
+    camera: boolean;
+  } | null;
+  presence: {
+    status: string;
+    clientStatus: {
+      desktop: string | null;
+      mobile: string | null;
+      web: string | null;
+    };
+    activities: {
+      name: string;
+      type: string;
+      details: string | null;
+      state: string | null;
+    }[];
+  } | null;
+}
+
 export interface MessageSearchResult {
   message: SerializedMessage;
   score: number;
