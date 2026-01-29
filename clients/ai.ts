@@ -1,4 +1,5 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import packageJson from "../package.json";
 
 export const heliconeProvider = createOpenAICompatible({
   name: "helicone",
@@ -7,6 +8,8 @@ export const heliconeProvider = createOpenAICompatible({
   includeUsage: true,
   headers: {
     "Helicone-User-Id": "capybot",
+    "Helicone-Session-Id": `capybot-${packageJson.version}`,
+    "Helicone-Session-Name": `CapyBot Version ${packageJson.version}`,
   },
 });
 
