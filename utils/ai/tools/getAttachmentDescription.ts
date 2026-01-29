@@ -3,6 +3,47 @@ import { z } from "zod";
 import { attachmentModel } from "../../../clients/ai";
 import { logger } from "../../logger";
 
+function detectMediaType(url: string, providedMediaType?: string): string {
+  try {
+    if (providedMediaType && providedMediaType !== "application/octet-stream") {
+      return providedMediaType;
+    }
+
+    const urlPath = url.split("?")[0];
+    const extension = urlPath.split(".").pop()?.toLowerCase();
+
+    const extensionMap: Record<string, string> = {
+      // Images
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      gif: "image/gif",
+      webp: "image/webp",
+      bmp: "image/bmp",
+      svg: "image/svg+xml",
+      // Documents
+      pdf: "application/pdf",
+      // Text
+      txt: "text/plain",
+      md: "text/markdown",
+      json: "application/json",
+      xml: "application/xml",
+      // Video
+      mp4: "video/mp4",
+      webm: "video/webm",
+      // Audio
+      mp3: "audio/mpeg",
+      wav: "audio/wav",
+      ogg: "audio/ogg",
+    };
+
+    return extensionMap[extension || ""] || "image/png";
+  } catch (error) {
+    logger.error("Error detecting media type", error);
+    return "image/png";
+  }
+}
+
 export const createGetAttachmentDescriptionTool = () =>
   tool({
     description:
@@ -26,8 +67,9 @@ export const createGetAttachmentDescriptionTool = () =>
           "Give a very verbose description of this attachment. Describe all visible elements, content, and any other notable details.";
         const prompt = customPrompt || defaultPrompt;
 
+        const detectedMediaType = detectMediaType(url, mediaType);
+
         const result = await generateText({
-          system: "/no_think", // Disable reasoning for nvidia/nemotron-nano-12b-v2-vl:free
           model: attachmentModel,
           messages: [
             {
@@ -40,7 +82,7 @@ export const createGetAttachmentDescriptionTool = () =>
                 {
                   type: "file",
                   data: url,
-                  mediaType: mediaType || "application/octet-stream",
+                  mediaType: detectedMediaType,
                 },
               ],
             },
