@@ -103,7 +103,7 @@ export default {
       logger.debug(`Processing msg ${message.id}. Reason: ${decision.reason}`);
 
       const prompt = context;
-      const tools = createTools(message.channel);
+      const tools = createTools(message.channel, message.guild);
 
       const aiStartTime = Date.now();
       const result = await generateText({
