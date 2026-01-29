@@ -6,9 +6,7 @@ import { logger } from "../utils/logger";
 export default {
   event: Events.InteractionCreate,
   handler: async (_client: Client, interaction: Interaction) => {
-    analytics
-      .trackEvent({ eventName: Events.InteractionCreate })
-      .catch(() => {});
+    analytics.trackEvent({ eventName: Events.InteractionCreate }).catch(() => {});
 
     if (interaction.isCommand()) {
       let options: Record<string, any> | undefined;
@@ -27,8 +25,7 @@ export default {
           guildId: interaction.guildId,
           channelId: interaction.channelId,
           success: true,
-          options:
-            options && Object.keys(options).length > 0 ? options : undefined,
+          options: options && Object.keys(options).length > 0 ? options : undefined,
         })
         .catch((err) => {
           logger.error(`Failed to track command analytics: ${err}`);

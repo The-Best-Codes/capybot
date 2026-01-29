@@ -2,16 +2,8 @@
 import "dotenv/config";
 import { program } from "commander";
 import { confirm, multiselect, select, text } from "@clack/prompts";
-import {
-  generateDevKey,
-  getKeyInfo,
-  revokeKey,
-  revokeUserSessions,
-} from "../utils/auth/devAuth";
-import {
-  ALL_PERMISSIONS,
-  PERMISSION_DESCRIPTIONS,
-} from "../utils/auth/permissions";
+import { generateDevKey, getKeyInfo, revokeKey, revokeUserSessions } from "../utils/auth/devAuth";
+import { ALL_PERMISSIONS, PERMISSION_DESCRIPTIONS } from "../utils/auth/permissions";
 import type { DevPermission } from "../utils/auth/permissions";
 import packageJson from "../package.json";
 
@@ -23,20 +15,11 @@ program
 program
   .command("generate")
   .description("Generate a new developer key")
-  .argument(
-    "[username]",
-    "Discord username (optional, will prompt if not provided)",
-  )
+  .argument("[username]", "Discord username (optional, will prompt if not provided)")
   .option("-e, --expires <days>", "Number of days until key expires")
-  .option(
-    "-p, --permissions <perms>",
-    "Comma-separated permissions (dm,dev_slash_commands)",
-  )
+  .option("-p, --permissions <perms>", "Comma-separated permissions (dm,dev_slash_commands)")
   .action(
-    async (
-      username: string | undefined,
-      options: { expires?: string; permissions?: string },
-    ) => {
+    async (username: string | undefined, options: { expires?: string; permissions?: string }) => {
       if (!process.env.DEV_AUTH_SECRET) {
         console.error("Error: DEV_AUTH_SECRET environment variable is not set");
         console.error("Add it to your .env file first");
@@ -98,9 +81,7 @@ program
           permissions = options.permissions
             .split(",")
             .map((p) => p.trim())
-            .filter((p) =>
-              ALL_PERMISSIONS.includes(p as DevPermission),
-            ) as DevPermission[];
+            .filter((p) => ALL_PERMISSIONS.includes(p as DevPermission)) as DevPermission[];
         } else {
           const permissionOptions = ALL_PERMISSIONS.map((perm) => ({
             value: perm,
@@ -119,21 +100,14 @@ program
 
         console.log("\nDeveloper key generated successfully\n");
         console.log(`Username:    ${finalUsername}`);
-        console.log(
-          `Expires:     ${expirationDays ? `in ${expirationDays} days` : "never"}`,
-        );
-        console.log(
-          `Permissions: ${permissions.length > 0 ? permissions.join(", ") : "none"}`,
-        );
+        console.log(`Expires:     ${expirationDays ? `in ${expirationDays} days` : "never"}`);
+        console.log(`Permissions: ${permissions.length > 0 ? permissions.join(", ") : "none"}`);
         console.log(`\nKey:\n${key}\n`);
         console.log(
           "Share this key securely with the user. They can use /dev_login to authenticate.",
         );
       } catch (error) {
-        console.error(
-          "Error generating key:",
-          error instanceof Error ? error.message : error,
-        );
+        console.error("Error generating key:", error instanceof Error ? error.message : error);
         process.exit(1);
       }
     },
@@ -175,14 +149,10 @@ program
       console.log(`Expires: Never`);
     } else if (info.expiresAt) {
       const expiresDate = new Date(info.expiresAt);
-      const daysRemaining = Math.ceil(
-        (info.expiresAt - Date.now()) / (24 * 60 * 60 * 1000),
-      );
+      const daysRemaining = Math.ceil((info.expiresAt - Date.now()) / (24 * 60 * 60 * 1000));
 
       if (daysRemaining > 0) {
-        console.log(
-          `Expires: ${expiresDate.toISOString()} (${daysRemaining} days remaining)`,
-        );
+        console.log(`Expires: ${expiresDate.toISOString()} (${daysRemaining} days remaining)`);
       } else {
         console.log(`Expired: ${expiresDate.toISOString()}`);
       }
@@ -190,9 +160,7 @@ program
 
     console.log(
       `Permissions: ${
-        info.permissions && info.permissions.length > 0
-          ? info.permissions.join(", ")
-          : "none"
+        info.permissions && info.permissions.length > 0 ? info.permissions.join(", ") : "none"
       }`,
     );
 
@@ -235,9 +203,7 @@ program
       const success = revokeKey(options.key);
       if (success) {
         console.log(`\nKey for ${info.username} has been revoked\n`);
-        console.log(
-          "Any active sessions using this key have been terminated.\n",
-        );
+        console.log("Any active sessions using this key have been terminated.\n");
       } else {
         console.log("\nKey was already revoked\n");
       }
@@ -248,9 +214,7 @@ program
       const count = revokeUserSessions(normalizedUsername);
 
       if (count > 0) {
-        console.log(
-          `\nRevoked ${count} session(s) for ${normalizedUsername}\n`,
-        );
+        console.log(`\nRevoked ${count} session(s) for ${normalizedUsername}\n`);
       } else {
         console.log(`\nNo active sessions found for ${normalizedUsername}\n`);
       }

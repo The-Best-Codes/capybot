@@ -33,12 +33,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        check: [fmt, tsc]
+        check: [fmt, tsc, lint]
         include:
           - check: fmt
             command: bun run fmt:check
           - check: tsc
             command: bun run build && bun run tsc
+          - check: lint
+            command: bun run lint
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 

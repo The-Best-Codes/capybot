@@ -12,10 +12,7 @@ export const createGenerateImageTool = () =>
         .describe(
           'A detailed prompt describing what image to generate. Be specific. Example: "A photorealistic image of a capybara wearing a party hat".',
         ),
-      width: z
-        .number()
-        .optional()
-        .describe("The width of the generated image. Defaults to 1024."),
+      width: z.number().optional().describe("The width of the generated image. Defaults to 1024."),
       height: z
         .number()
         .optional()

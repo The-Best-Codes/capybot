@@ -14,9 +14,7 @@ export default {
     .addStringOption((option) =>
       option
         .setName("message_id")
-        .setDescription(
-          "The message ID to get context for (optional, defaults to latest message)",
-        )
+        .setDescription("The message ID to get context for (optional, defaults to latest message)")
         .setRequired(false),
     ),
 

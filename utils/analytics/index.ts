@@ -1,12 +1,7 @@
 import { randomUUID } from "crypto";
 import { analyticsConfig } from "./config";
 import { AnalyticsStorage } from "./storage";
-import type {
-  AIAnalytics,
-  CommandAnalytics,
-  EventAnalytics,
-  MessageAnalytics,
-} from "./types";
+import type { AIAnalytics, CommandAnalytics, EventAnalytics, MessageAnalytics } from "./types";
 import { logger } from "../logger";
 
 class AnalyticsManager {
@@ -51,9 +46,7 @@ class AnalyticsManager {
 
     const config = analyticsConfig.get();
     const intervalMs =
-      config.pruneInterval === "daily"
-        ? 24 * 60 * 60 * 1000
-        : 7 * 24 * 60 * 60 * 1000;
+      config.pruneInterval === "daily" ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
 
     // Schedule first run at next midnight
     const now = new Date();
@@ -72,9 +65,7 @@ class AnalyticsManager {
     );
   }
 
-  async trackCommand(
-    data: Omit<CommandAnalytics, "id" | "timestamp">,
-  ): Promise<void> {
+  async trackCommand(data: Omit<CommandAnalytics, "id" | "timestamp">): Promise<void> {
     if (!this.initialized) await this.initialize();
 
     const analytics: CommandAnalytics = {
@@ -86,9 +77,7 @@ class AnalyticsManager {
     await this.commandStorage.save(analytics, data.commandName);
   }
 
-  async trackEvent(
-    data: Omit<EventAnalytics, "id" | "timestamp">,
-  ): Promise<void> {
+  async trackEvent(data: Omit<EventAnalytics, "id" | "timestamp">): Promise<void> {
     if (!this.initialized) await this.initialize();
 
     const analytics: EventAnalytics = {
@@ -100,9 +89,7 @@ class AnalyticsManager {
     await this.eventStorage.save(analytics, data.eventName);
   }
 
-  async trackMessage(
-    data: Omit<MessageAnalytics, "id" | "timestamp">,
-  ): Promise<void> {
+  async trackMessage(data: Omit<MessageAnalytics, "id" | "timestamp">): Promise<void> {
     if (!this.initialized) await this.initialize();
 
     const analytics: MessageAnalytics = {

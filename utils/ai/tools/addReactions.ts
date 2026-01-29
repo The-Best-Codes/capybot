@@ -4,18 +4,11 @@ import { z } from "zod";
 
 export const createAddReactionsTool = (channel: TextBasedChannel) =>
   tool({
-    description:
-      "Add emoji reactions to a message in the channel. Accepts 1-5 reactions.",
+    description: "Add emoji reactions to a message in the channel. Accepts 1-5 reactions.",
     inputSchema: z.object({
-      messageId: z
-        .string()
-        .describe("The ID of the message to add reactions to"),
+      messageId: z.string().describe("The ID of the message to add reactions to"),
       reactions: z
-        .array(
-          z
-            .string()
-            .describe("Emoji to react with (unicode or Discord emoji format)"),
-        )
+        .array(z.string().describe("Emoji to react with (unicode or Discord emoji format)"))
         .min(1)
         .max(5)
         .describe("Array of 1-5 emojis to add as reactions to the message"),

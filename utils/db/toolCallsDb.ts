@@ -46,9 +46,7 @@ class ToolCallStore {
       };
       await fs.writeFile(filePath, JSON.stringify(data, null, 2));
     } catch (error) {
-      logger.error(
-        `Failed to save tool calls for message ${messageId}: ${error}`,
-      );
+      logger.error(`Failed to save tool calls for message ${messageId}: ${error}`);
     }
   }
 
@@ -60,7 +58,7 @@ class ToolCallStore {
       const content = await fs.readFile(filePath, "utf-8");
       const data = JSON.parse(content);
       return data.toolCalls || [];
-    } catch (error) {
+    } catch {
       return [];
     }
   }

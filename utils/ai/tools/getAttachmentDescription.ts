@@ -12,9 +12,7 @@ export const createGetAttachmentDescriptionTool = () =>
       mediaType: z
         .string()
         .optional()
-        .describe(
-          "The MIME type of the file (e.g., 'image/png', 'application/pdf')",
-        ),
+        .describe("The MIME type of the file (e.g., 'image/png', 'application/pdf')"),
       customPrompt: z
         .string()
         .optional()

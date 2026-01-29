@@ -76,13 +76,12 @@ export default {
         .setTimestamp();
 
       if (category === "overview") {
-        const [commandStats, messageStats, aiStats, eventStats] =
-          await Promise.all([
-            AnalyticsQueries.getCommandStats(startDate, endDate),
-            AnalyticsQueries.getMessageStats(startDate, endDate),
-            AnalyticsQueries.getAIStats(startDate, endDate),
-            AnalyticsQueries.getEventStats(startDate, endDate),
-          ]);
+        const [commandStats, messageStats, aiStats, eventStats] = await Promise.all([
+          AnalyticsQueries.getCommandStats(startDate, endDate),
+          AnalyticsQueries.getMessageStats(startDate, endDate),
+          AnalyticsQueries.getAIStats(startDate, endDate),
+          AnalyticsQueries.getEventStats(startDate, endDate),
+        ]);
 
         embed.setDescription(
           `Analytics overview for **${period === "today" ? "today" : `the last ${period.replace("days", " days")}`}**`,
@@ -116,10 +115,7 @@ export default {
           },
         );
       } else if (category === "commands") {
-        const stats = await AnalyticsQueries.getCommandStats(
-          startDate,
-          endDate,
-        );
+        const stats = await AnalyticsQueries.getCommandStats(startDate, endDate);
 
         embed.setDescription(`Command statistics`);
         embed.addFields({
@@ -143,10 +139,7 @@ export default {
           });
         }
       } else if (category === "messages") {
-        const stats = await AnalyticsQueries.getMessageStats(
-          startDate,
-          endDate,
-        );
+        const stats = await AnalyticsQueries.getMessageStats(startDate, endDate);
 
         embed.setDescription(`Message processing statistics`);
         embed.addFields(
@@ -182,9 +175,7 @@ export default {
         );
 
         if (stats.toolUsage.length > 0) {
-          const topTools = stats.toolUsage
-            .sort((a, b) => b.callCount - a.callCount)
-            .slice(0, 10);
+          const topTools = stats.toolUsage.sort((a, b) => b.callCount - a.callCount).slice(0, 10);
 
           embed.addFields({
             name: "Tool Usage",
@@ -212,17 +203,11 @@ export default {
         if (topEvents.length > 0) {
           embed.addFields({
             name: "By Event Type",
-            value: topEvents
-              .map(([event, count]) => `\`${event}\`: ${count}`)
-              .join("\n"),
+            value: topEvents.map(([event, count]) => `\`${event}\`: ${count}`).join("\n"),
           });
         }
       } else if (category === "users") {
-        const topUsers = await AnalyticsQueries.getTopUsers(
-          startDate,
-          endDate,
-          10,
-        );
+        const topUsers = await AnalyticsQueries.getTopUsers(startDate, endDate, 10);
 
         embed.setDescription(`Top active users`);
 

@@ -3,12 +3,7 @@ import path from "path";
 import { logger } from "../logger";
 import type { AnalyticsConfig } from "./types";
 
-const CONFIG_PATH = path.join(
-  process.cwd(),
-  "data",
-  "analytics",
-  "config.json",
-);
+const CONFIG_PATH = path.join(process.cwd(), "data", "analytics", "config.json");
 
 const DEFAULT_CONFIG: AnalyticsConfig = {
   enabled: true,
