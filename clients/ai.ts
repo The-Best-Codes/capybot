@@ -5,6 +5,9 @@ export const heliconeProvider = createOpenAICompatible({
   apiKey: process.env.HELICONE_AI_API_KEY,
   baseURL: "https://ai-gateway.helicone.ai",
   includeUsage: true,
+  headers: {
+    "Helicone-User-Id": "capybot",
+  },
 });
 
 // export const globalModel = openrouter("xiaomi/mimo-v2-flash:free");
