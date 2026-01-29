@@ -32,6 +32,7 @@ export interface SerializedUser {
   isBot: boolean;
   nickname: string | null;
   roles: string[];
+  rolesString: string;
   joinedAt: string | null;
 }
 
@@ -92,6 +93,7 @@ export function serializeChannel(
 }
 
 export function serializeUser(member: GuildMember): SerializedUser {
+  const roles = member.roles.cache.map((r) => r.name).filter((n) => n !== "@everyone");
   return {
     id: member.id,
     username: member.user.username,
@@ -99,7 +101,8 @@ export function serializeUser(member: GuildMember): SerializedUser {
     discriminator: member.user.discriminator,
     isBot: member.user.bot,
     nickname: member.nickname,
-    roles: member.roles.cache.map((r) => r.name).filter((n) => n !== "@everyone"),
+    roles,
+    rolesString: roles.join(" "),
     joinedAt: member.joinedAt?.toISOString() ?? null,
   };
 }
@@ -113,6 +116,7 @@ export function serializeBasicUser(user: User): SerializedUser {
     isBot: user.bot,
     nickname: null,
     roles: [],
+    rolesString: "",
     joinedAt: null,
   };
 }

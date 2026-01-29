@@ -38,7 +38,7 @@ export async function searchUsers({
 
   const searchResults = fuzzySearch({
     items: serializedUsers,
-    keys: ["username", "displayName", "nickname", "roles"],
+    keys: ["username", "displayName", "nickname", "rolesString"],
     query,
     limit: clampedLimit,
   });
