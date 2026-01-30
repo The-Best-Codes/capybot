@@ -10,3 +10,6 @@ pnpm-lock.yaml
 *.tsbuildinfo
 
 data/
+
+.env.*
+!.env.example
