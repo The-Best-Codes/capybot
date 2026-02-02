@@ -2,7 +2,12 @@ import { generateText, stepCountIs } from "ai";
 import { ChannelType, Client, Events, Message, type OmitPartialGroupDMChannel } from "discord.js";
 import { globalModel } from "../clients/ai";
 import { buildContext } from "../utils/ai/context";
-import { IGNORE_PHRASE, systemInstructions } from "../utils/ai/systemPrompt";
+import {
+  IGNORE_PHRASE,
+  REPLY_NONE,
+  REPLY_PHRASE_REGEX,
+  systemInstructions,
+} from "../utils/ai/systemPrompt";
 import { createTools } from "../utils/ai/tools";
 import { analytics } from "../utils/analytics/index";
 import { checkDevAuth } from "../utils/auth/devAuth";
@@ -115,7 +120,7 @@ export default {
       });
       const aiEndTime = Date.now();
 
-      const { text } = result;
+      let { text } = result;
 
       if (text.includes(IGNORE_PHRASE)) {
         logger.info(`AI Decided to ignore message: ${message.id}`);
@@ -135,6 +140,31 @@ export default {
 
         conversationManager.setGenerating(message.channelId, false);
         return;
+      }
+
+      let replyTarget: Message | null | undefined = message;
+      const replyMatch = text.match(REPLY_PHRASE_REGEX);
+
+      if (replyMatch) {
+        const replyId = replyMatch[1].trim();
+        text = text.replace(REPLY_PHRASE_REGEX, "").trim();
+
+        if (replyId === REPLY_NONE) {
+          replyTarget = null;
+          logger.debug(`AI chose not to reply to any message for ${message.id}`);
+        } else {
+          try {
+            replyTarget =
+              message.channel.messages.cache.get(replyId) ||
+              (await message.channel.messages.fetch(replyId));
+            logger.debug(`AI chose to reply to message ${replyId} instead of ${message.id}`);
+          } catch {
+            logger.warn(
+              `AI specified invalid reply target ${replyId}, falling back to default for ${message.id}`,
+            );
+            replyTarget = message;
+          }
+        }
       }
 
       const allToolCalls: ToolCall[] = [];
@@ -171,10 +201,17 @@ export default {
       }
 
       if (text) {
-        await message.reply({
-          content: text,
-          allowedMentions: { repliedUser: false, parse: [] },
-        });
+        if (replyTarget) {
+          await replyTarget.reply({
+            content: text,
+            allowedMentions: { repliedUser: false, parse: [] },
+          });
+        } else if ("send" in message.channel) {
+          await message.channel.send({
+            content: text,
+            allowedMentions: { parse: [] },
+          });
+        }
       } else {
         logger.info(`No text generated for message ${message.id}`);
       }

@@ -1,4 +1,6 @@
 export const IGNORE_PHRASE = "[[IGNORE]]";
+export const REPLY_PHRASE_REGEX = /\[\[REPLY:([^\]]+)\]\]/;
+export const REPLY_NONE = "NONE";
 
 export const systemInstructions = `
 # General Information
@@ -26,4 +28,12 @@ ${IGNORE_PHRASE}
 
 You may also use the ignore phrase after performing actions that don't require a text message. For example, if you want to just react to a message with an emoji, you could send the ignore phrase after the \`addReaction\` tool has finished.
 In other cases, though, be quite hesistant to use the ignore phrase unless the user explicitly requests it. If you're unsure, err on the side of responding.
+
+# Customizing Reply Target
+By default, your response will reply to the message that triggered you. You can customize this behavior using the reply phrase:
+- \`[[REPLY:message_id]]\` - Reply to a specific message by its ID (you can find message IDs in the context JSON)
+- \`[[REPLY:${REPLY_NONE}]]\` - Send your message without replying to any message
+
+If you don't include a reply phrase, the default behavior is used (reply to the triggering message for explicit pings, or send without reply for overheard messages).
+The reply phrase will be stripped from your final message. You can place it anywhere in your response.
 `;
