@@ -4,6 +4,7 @@ import { globalModel } from "../clients/ai";
 import { buildContext } from "../utils/ai/context";
 import {
   IGNORE_PHRASE,
+  MAX_TOOL_STEPS,
   REPLY_NONE,
   REPLY_PHRASE_REGEX,
   systemInstructions,
@@ -116,7 +117,7 @@ export default {
         prompt,
         system: systemInstructions,
         tools,
-        stopWhen: stepCountIs(10),
+        stopWhen: stepCountIs(MAX_TOOL_STEPS),
       });
       const aiEndTime = Date.now();
 
