@@ -1,7 +1,7 @@
-import type { Guild, Message, NewsChannel, TextChannel, ThreadChannel } from "discord.js";
-import { ChannelType } from "discord.js";
+import type { Guild, Message } from "discord.js";
+import { isTextBasedChannel, type TextBasedGuildChannel } from "./channelUtils";
 import { fuzzySearch } from "./fuzzy";
-import { type MessageSearchResult, type SerializedMessage, serializeMessage } from "./types";
+import { type SerializedMessage, serializeMessage } from "./types";
 
 export interface SearchMessagesParams {
   guild: Guild;
@@ -10,28 +10,42 @@ export interface SearchMessagesParams {
   limit?: number;
 }
 
+export interface SearchMessagesResult {
+  results: MessageSearchResult[];
+  totalSearched: number;
+  truncated: boolean;
+  warning?: string;
+}
+
+export interface MessageSearchResult {
+  message: SerializedMessage;
+  score: number;
+}
+
 interface MessageWithChannel {
   message: Message;
   channelName: string;
 }
+
+const MAX_MESSAGES_PER_CHANNEL = 100;
 
 export async function searchMessages({
   guild,
   query,
   channelId,
   limit = 10,
-}: SearchMessagesParams): Promise<MessageSearchResult[]> {
+}: SearchMessagesParams): Promise<SearchMessagesResult> {
   const clampedLimit = Math.min(Math.max(limit, 1), 100);
   const messagesToSearch: MessageWithChannel[] = [];
 
   if (channelId) {
     const channel = guild.channels.cache.get(channelId);
     if (!channel) {
-      return [];
+      return { results: [], totalSearched: 0, truncated: false };
     }
 
     if (!isTextBasedChannel(channel)) {
-      return [];
+      return { results: [], totalSearched: 0, truncated: false };
     }
 
     const messages = await fetchChannelMessages(channel, clampedLimit * 5);
@@ -52,46 +66,47 @@ export async function searchMessages({
     }
   }
 
+  const totalSearched = messagesToSearch.length;
   const serializedMessages: SerializedMessage[] = messagesToSearch.map((m) =>
     serializeMessage(m.message, m.channelName),
   );
+
+  let searchResults: MessageSearchResult[];
 
   if (!query?.trim()) {
     const sorted = serializedMessages
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, clampedLimit);
 
-    return sorted.map((message) => ({
+    searchResults = sorted.map((message) => ({
       message,
-      score: 1,
+      score: -1,
+    }));
+  } else {
+    const fuzzyResults = fuzzySearch({
+      items: serializedMessages,
+      keys: ["content", "authorUsername", "authorDisplayName"],
+      query,
+      limit: clampedLimit,
+    });
+
+    searchResults = fuzzyResults.map((r) => ({
+      message: r.item,
+      score: r.score,
     }));
   }
 
-  const searchResults = fuzzySearch({
-    items: serializedMessages,
-    keys: ["content", "authorUsername", "authorDisplayName"],
-    query,
-    limit: clampedLimit,
-  });
+  const truncated = totalSearched > clampedLimit;
+  const warning =
+    `Searched ${totalSearched} recent messages (max ${MAX_MESSAGES_PER_CHANNEL}/channel). ` +
+    `Older messages are not searchable via this API.`;
 
-  return searchResults.map((r) => ({
-    message: r.item,
-    score: r.score,
-  }));
-}
-
-type TextBasedGuildChannel = TextChannel | NewsChannel | ThreadChannel;
-
-function isTextBasedChannel(channel: unknown): channel is TextBasedGuildChannel {
-  if (!channel || typeof channel !== "object") return false;
-  const c = channel as { type?: number };
-  return (
-    c.type === ChannelType.GuildText ||
-    c.type === ChannelType.GuildAnnouncement ||
-    c.type === ChannelType.PublicThread ||
-    c.type === ChannelType.PrivateThread ||
-    c.type === ChannelType.AnnouncementThread
-  );
+  return {
+    results: searchResults,
+    totalSearched,
+    truncated,
+    warning,
+  };
 }
 
 async function fetchChannelMessages(
@@ -99,7 +114,9 @@ async function fetchChannelMessages(
   limit: number,
 ): Promise<Message[]> {
   try {
-    const messages = await channel.messages.fetch({ limit: Math.min(limit, 100) });
+    const messages = await channel.messages.fetch({
+      limit: Math.min(limit, MAX_MESSAGES_PER_CHANNEL),
+    });
     return [...messages.values()];
   } catch {
     return [];

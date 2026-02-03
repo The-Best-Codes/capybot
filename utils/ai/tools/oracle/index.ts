@@ -105,7 +105,7 @@ When 'id' is not provided, performs fuzzy search (or lists all if no query).`,
         switch (input.action) {
           case "messages": {
             if (input.id) {
-              const message = await getMessage({
+              const { message, warning } = await getMessage({
                 guild,
                 messageId: input.id,
                 channelId: input.channelId,
@@ -116,6 +116,7 @@ When 'id' is not provided, performs fuzzy search (or lists all if no query).`,
                   success: false,
                   action: "messages",
                   error: `Message with ID '${input.id}' not found`,
+                  warning,
                 };
               }
 
@@ -124,10 +125,11 @@ When 'id' is not provided, performs fuzzy search (or lists all if no query).`,
                 action: "messages",
                 mode: "get",
                 result: message,
+                warning,
               };
             }
 
-            const results = await searchMessages({
+            const searchResult = await searchMessages({
               guild,
               query: input.query,
               channelId: input.channelId,
@@ -137,10 +139,13 @@ When 'id' is not provided, performs fuzzy search (or lists all if no query).`,
               success: true,
               action: "messages",
               mode: "search",
-              count: results.length,
-              results: results.map((r) => ({
+              count: searchResult.results.length,
+              totalSearched: searchResult.totalSearched,
+              truncated: searchResult.truncated,
+              warning: searchResult.warning,
+              results: searchResult.results.map((r) => ({
                 ...r.message,
-                relevanceScore: r.score,
+                relevanceScore: r.score === -1 ? null : r.score,
               })),
             };
           }
@@ -168,7 +173,7 @@ When 'id' is not provided, performs fuzzy search (or lists all if no query).`,
               };
             }
 
-            const results = await listChannels({
+            const listResult = await listChannels({
               guild,
               query: input.query,
               limit: input.limit,
@@ -177,10 +182,12 @@ When 'id' is not provided, performs fuzzy search (or lists all if no query).`,
               success: true,
               action: "channels",
               mode: "search",
-              count: results.length,
-              results: results.map((r) => ({
+              count: listResult.results.length,
+              totalChannels: listResult.totalChannels,
+              truncated: listResult.truncated,
+              results: listResult.results.map((r) => ({
                 ...r.channel,
-                relevanceScore: r.score,
+                relevanceScore: r.score === -1 ? null : r.score,
               })),
             };
           }
@@ -208,7 +215,7 @@ When 'id' is not provided, performs fuzzy search (or lists all if no query).`,
               };
             }
 
-            const results = await searchUsers({
+            const userResult = await searchUsers({
               guild,
               query: input.query,
               limit: input.limit,
@@ -217,10 +224,13 @@ When 'id' is not provided, performs fuzzy search (or lists all if no query).`,
               success: true,
               action: "users",
               mode: "search",
-              count: results.length,
-              results: results.map((r) => ({
+              count: userResult.results.length,
+              totalMembers: userResult.totalMembers,
+              truncated: userResult.truncated,
+              warning: userResult.warning,
+              results: userResult.results.map((r) => ({
                 ...r.user,
-                relevanceScore: r.score,
+                relevanceScore: r.score === -1 ? null : r.score,
               })),
             };
           }

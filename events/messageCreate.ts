@@ -116,7 +116,7 @@ export default {
         prompt,
         system: systemInstructions,
         tools,
-        stopWhen: stepCountIs(3),
+        stopWhen: stepCountIs(10),
       });
       const aiEndTime = Date.now();
 

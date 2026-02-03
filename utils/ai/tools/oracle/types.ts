@@ -1,4 +1,5 @@
 import type { GuildChannel, GuildMember, Message, ThreadChannel, User } from "discord.js";
+import { ChannelType } from "discord.js";
 
 export interface SerializedMessage {
   id: string;
@@ -168,21 +169,6 @@ export interface DetailedUser extends SerializedUser {
   } | null;
 }
 
-export interface MessageSearchResult {
-  message: SerializedMessage;
-  score: number;
-}
-
-export interface ChannelSearchResult {
-  channel: SerializedChannel;
-  score: number;
-}
-
-export interface UserSearchResult {
-  user: SerializedUser;
-  score: number;
-}
-
 export function serializeMessage(msg: Message, channelName: string): SerializedMessage {
   return {
     id: msg.id,
@@ -215,7 +201,7 @@ export function serializeChannel(
   return {
     id: channel.id,
     name: channel.name,
-    type: channel.type.toString(),
+    type: ChannelType[channel.type] ?? `Unknown(${channel.type})`,
     topic,
     parentId: channel.parentId,
     parentName,

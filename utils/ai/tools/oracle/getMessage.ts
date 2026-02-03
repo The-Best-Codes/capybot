@@ -1,5 +1,5 @@
 import type { Guild, Message, TextBasedChannel } from "discord.js";
-import { ChannelType } from "discord.js";
+import { isTextBasedChannel } from "./channelUtils";
 import type {
   DetailedMessage,
   SerializedAttachment,
@@ -15,13 +15,19 @@ export interface GetMessageParams {
   channelId?: string;
 }
 
+export interface GetMessageResult {
+  message: DetailedMessage | null;
+  warning?: string;
+}
+
 export async function getMessage({
   guild,
   messageId,
   channelId,
-}: GetMessageParams): Promise<DetailedMessage | null> {
+}: GetMessageParams): Promise<GetMessageResult> {
   let message: Message | null = null;
   let channelName = "unknown";
+  let warning: string | undefined;
 
   if (channelId) {
     const channel = guild.channels.cache.get(channelId);
@@ -30,13 +36,18 @@ export async function getMessage({
         message = await (channel as TextBasedChannel).messages.fetch(messageId);
         channelName = "name" in channel ? channel.name : "unknown";
       } catch {
-        return null;
+        return { message: null };
       }
     }
   } else {
     const textChannels = guild.channels.cache.filter(isTextBasedChannel);
+    const channelCount = textChannels.size;
+    let searched = 0;
+
+    warning = `No channelId provided. Searching ${channelCount} channels sequentially (slow, may hit rate limits). Provide channelId for faster lookup.`;
 
     for (const channel of textChannels.values()) {
+      searched++;
       try {
         message = await (channel as TextBasedChannel).messages.fetch(messageId);
         channelName = "name" in channel ? channel.name : "unknown";
@@ -45,25 +56,17 @@ export async function getMessage({
         continue;
       }
     }
+
+    if (message) {
+      warning = `Found after searching ${searched}/${channelCount} channels. Provide channelId for faster lookups.`;
+    }
   }
 
   if (!message) {
-    return null;
+    return { message: null, warning };
   }
 
-  return serializeDetailedMessage(message, channelName);
-}
-
-function isTextBasedChannel(channel: unknown): boolean {
-  if (!channel || typeof channel !== "object") return false;
-  const c = channel as { type?: number };
-  return (
-    c.type === ChannelType.GuildText ||
-    c.type === ChannelType.GuildAnnouncement ||
-    c.type === ChannelType.PublicThread ||
-    c.type === ChannelType.PrivateThread ||
-    c.type === ChannelType.AnnouncementThread
-  );
+  return { message: serializeDetailedMessage(message, channelName), warning };
 }
 
 function serializeDetailedMessage(msg: Message, channelName: string): DetailedMessage {

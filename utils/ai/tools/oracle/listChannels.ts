@@ -1,6 +1,6 @@
 import type { Guild, GuildChannel, ThreadChannel } from "discord.js";
 import { fuzzySearch } from "./fuzzy";
-import { type ChannelSearchResult, serializeChannel, type SerializedChannel } from "./types";
+import { serializeChannel, type SerializedChannel } from "./types";
 
 export interface ListChannelsParams {
   guild: Guild;
@@ -8,11 +8,22 @@ export interface ListChannelsParams {
   limit?: number;
 }
 
+export interface ChannelSearchResult {
+  channel: SerializedChannel;
+  score: number;
+}
+
+export interface ListChannelsResult {
+  results: ChannelSearchResult[];
+  totalChannels: number;
+  truncated: boolean;
+}
+
 export async function listChannels({
   guild,
   query,
   limit = 100,
-}: ListChannelsParams): Promise<ChannelSearchResult[]> {
+}: ListChannelsParams): Promise<ListChannelsResult> {
   const clampedLimit = Math.min(Math.max(limit, 1), 100);
 
   try {
@@ -34,28 +45,39 @@ export async function listChannels({
     serializedChannels.push(serializeChannel(channel, parentName));
   }
 
+  const totalChannels = serializedChannels.length;
+  let searchResults: ChannelSearchResult[];
+
   if (!query?.trim()) {
     const sorted = serializedChannels
       .sort((a, b) => a.position - b.position)
       .slice(0, clampedLimit);
 
-    return sorted.map((channel) => ({
+    searchResults = sorted.map((channel) => ({
       channel,
-      score: 1,
+      score: -1,
+    }));
+  } else {
+    const fuzzyResults = fuzzySearch({
+      items: serializedChannels,
+      keys: ["name", "topic"],
+      query,
+      limit: clampedLimit,
+    });
+
+    searchResults = fuzzyResults.map((r) => ({
+      channel: r.item,
+      score: r.score,
     }));
   }
 
-  const searchResults = fuzzySearch({
-    items: serializedChannels,
-    keys: ["name", "topic"],
-    query,
-    limit: clampedLimit,
-  });
+  const truncated = totalChannels > clampedLimit;
 
-  return searchResults.map((r) => ({
-    channel: r.item,
-    score: r.score,
-  }));
+  return {
+    results: searchResults,
+    totalChannels,
+    truncated,
+  };
 }
 
 function isValidChannel(
