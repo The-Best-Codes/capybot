@@ -85,13 +85,17 @@ export const createOracleTool = (channel: TextBasedChannel, guild: Guild | null)
   tool({
     description: `The Great Oracle! Search and discover information in the current Discord server.
 
-Actions:
-- messages: Search messages OR get detailed info about a specific message by ID (includes reactions, embeds, attachments, mentions, reply chain)
-- channels: Search channels OR get detailed info about a specific channel by ID (includes permissions, thread metadata, voice settings)
-- users: Search users OR get detailed info about a specific user by ID (includes avatar, permissions, voice state, presence)
+IMPORTANT: Each action has its own ID space. A channel ID is NOT a message ID.
+- To find messages in a channel, first get the channel, then search messages with channelId filter
+- Message IDs and channel IDs are different - don't confuse them
 
-When 'id' is provided, returns comprehensive details about that specific entity.
-When 'id' is not provided, performs fuzzy search (or lists all if no query).`,
+Actions:
+- messages: Search messages by content/author OR get a specific message by its message ID. Query is plain text fuzzy search (not a filter syntax).
+- channels: List/search channels by name OR get a specific channel by its channel ID
+- users: List/search users by name/nickname OR get a specific user by their user ID
+
+Query parameter: Plain text for fuzzy matching (e.g., "hello world", "john"). NOT a filter syntax - "channel:123" won't work.
+To filter messages by channel, use the channelId parameter instead.`,
     inputSchema: OracleActionSchema,
     execute: async (input) => {
       if (!guild) {
