@@ -1,6 +1,6 @@
 {
   "name": "capybot",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.0-beta.2",
   "private": true,
   "description": "CapyBot is CapyBot. He's indescribable.",
   "type": "module",
@@ -16,22 +16,22 @@
     "lint:fix": "oxlint --fix ."
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.20",
-    "@ai-sdk/openai-compatible": "^2.0.26",
-    "@clack/prompts": "^1.0.0",
-    "@openrouter/ai-sdk-provider": "^2.1.1",
-    "ai": "^6.0.68",
+    "@ai-sdk/google": "^3.0.30",
+    "@ai-sdk/openai-compatible": "^2.0.30",
+    "@clack/prompts": "^1.0.1",
+    "@openrouter/ai-sdk-provider": "^2.2.3",
+    "ai": "^6.0.97",
     "commander": "^14.0.3",
     "consola": "^3.4.2",
     "discord.js": "^14.25.1",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.3.1",
     "fuzzysort": "^3.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "discraft": "^1.7.11",
-    "oxfmt": "^0.28.0",
-    "oxlint": "^1.43.0",
+    "oxfmt": "^0.35.0",
+    "oxlint": "^1.50.0",
     "typescript": "^5.9.3"
   }
 }
