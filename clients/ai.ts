@@ -1,19 +1,13 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import packageJson from "../package.json";
 
-export const heliconeProvider = createOpenAICompatible({
-  name: "helicone",
-  apiKey: process.env.HELICONE_AI_API_KEY,
-  baseURL: "https://ai-gateway.helicone.ai",
+export const aiProvider = createOpenAICompatible({
+  name: "openai-compatible",
+  apiKey: process.env.AI_API_KEY,
+  baseURL: process.env.AI_BASE_URL || "",
   includeUsage: true,
-  headers: {
-    "Helicone-User-Id": "capybot",
-    "Helicone-Session-Id": `capybot-${packageJson.version}`,
-    "Helicone-Session-Name": `CapyBot Version ${packageJson.version}`,
-  },
 });
 
-// export const globalModel = openrouter("xiaomi/mimo-v2-flash:free");
-export const globalModel = heliconeProvider("gemini-3-flash-preview");
-// export const attachmentModel = openrouter("nvidia/nemotron-nano-12b-v2-vl:free");
-export const attachmentModel = heliconeProvider("gemini-2.5-flash-lite");
+export const globalModel = aiProvider(process.env.AI_GLOBAL_MODEL || "gemini-3-flash-preview");
+export const attachmentModel = aiProvider(
+  process.env.AI_ATTACHMENT_MODEL || "gemini-2.5-flash-lite",
+);
