@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the Discord client is correctly configured with all required GatewayIntentBits and Partials. The correct intent and partial selections are necessary for the bot to receive message content, DMs, and guild member data. Incorrect configuration would cause silent failures at runtime.",
+  "type": "weighted_checklist",
+  "capability_tested": "Discord Client Configuration",
+  "checklist": [
+    {
+      "name": "Client instantiation",
+      "description": "A `new Client({ intents: [...], partials: [...] })` is created and exported as the default or named export.",
+      "max_score": 15
+    },
+    {
+      "name": "Core guild intents",
+      "description": "The intents array includes `GatewayIntentBits.Guilds`, `GatewayIntentBits.GuildMessages`, and `GatewayIntentBits.MessageContent`.",
+      "max_score": 30
+    },
+    {
+      "name": "DM and member intents",
+      "description": "The intents array includes `GatewayIntentBits.DirectMessages` and `GatewayIntentBits.GuildMembers`.",
+      "max_score": 25
+    },
+    {
+      "name": "DM partials",
+      "description": "The partials array includes `Partials.Channel` and `Partials.Message` to support partial DM handling.",
+      "max_score": 20
+    },
+    {
+      "name": "Singleton export",
+      "description": "The client is exported as a module-level singleton (not re-created on each call), so all imports share the same instance.",
+      "max_score": 10
+    }
+  ]
+}

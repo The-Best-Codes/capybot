@@ -1,0 +1,7 @@
+{
+  "name": "bestcodes-dev/capybot",
+  "version": "0.2.0",
+  "docs": "docs/index.md",
+  "summary": "CapyBot is an AI-powered Discord bot built with TypeScript and Bun, featuring multi-provider AI support, tool-calling, analytics, conversation management, and developer authentication.",
+  "private": true
+}

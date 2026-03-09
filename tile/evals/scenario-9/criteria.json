@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the oracle tool correctly implements the three-action Discord entity lookup system with both ID-based and fuzzy-search modes. This tool extends the AI's awareness of the Discord server at runtime, enabling context-aware responses.",
+  "type": "weighted_checklist",
+  "capability_tested": "Oracle Tool - Entity Lookup",
+  "checklist": [
+    {
+      "name": "Tool definition with zod schema",
+      "description": "The oracle is defined using the Vercel AI SDK's `tool()` helper with a zod schema that includes the `action` discriminator and action-specific fields (`id`, `query`, `channelId`, `limit`).",
+      "max_score": 20
+    },
+    {
+      "name": "Messages action",
+      "description": "The `messages` action correctly fetches a single message by ID (returning content, author, reactions, etc.) or performs a fuzzy search of recent messages by content/author returning up to `limit` results.",
+      "max_score": 25
+    },
+    {
+      "name": "Channels action",
+      "description": "The `channels` action returns detailed channel info by ID (name, type, topic, position) or fuzzy-searches guild channels by name.",
+      "max_score": 20
+    },
+    {
+      "name": "Users action",
+      "description": "The `users` action returns detailed member info by ID (username, displayName, roles, presence) or fuzzy-searches members by username, displayName, and role names.",
+      "max_score": 20
+    },
+    {
+      "name": "Error handling",
+      "description": "When a requested entity is not found (by ID), the tool returns an error object (e.g. `{ error: '...' }`) rather than throwing an exception.",
+      "max_score": 15
+    }
+  ]
+}

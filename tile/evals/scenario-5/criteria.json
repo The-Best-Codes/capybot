@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the conversation decision logic correctly implements all six processing rules in the right priority order. This is the core gating mechanism that controls when capybot responds to Discord messages, and incorrect logic would cause the bot to respond too much or too little.",
+  "type": "weighted_checklist",
+  "capability_tested": "Conversation Decision Logic",
+  "checklist": [
+    {
+      "name": "Explicit ping rule",
+      "description": "Returns `true` immediately when the message's mentions collection includes the bot's user ID.",
+      "max_score": 20
+    },
+    {
+      "name": "Reply-to-bot rule",
+      "description": "Returns `true` when the message has a `reference` pointing to a message authored by the bot.",
+      "max_score": 15
+    },
+    {
+      "name": "Keyword trigger rule",
+      "description": "Returns `true` when the message content contains `'capybot'` (case-insensitive match).",
+      "max_score": 15
+    },
+    {
+      "name": "Hot window logic",
+      "description": "When the bot's last message was within 10 seconds, correctly processes based on: same user as last reply target, or any user within 5 seconds of last bot message.",
+      "max_score": 30
+    },
+    {
+      "name": "Random overhear rule",
+      "description": "Applies a 2% random chance to process only for messages longer than 10 characters; messages ≤ 10 characters are never processed by this rule.",
+      "max_score": 20
+    }
+  ]
+}

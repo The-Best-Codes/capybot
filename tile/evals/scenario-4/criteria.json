@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the solution correctly uses generateText from the Vercel AI SDK with the required maxSteps configuration and properly processes the [[IGNORE]] directive. This pattern is central to capybot's message handling loop.",
+  "type": "weighted_checklist",
+  "capability_tested": "AI Text Generation with Tool Calling",
+  "checklist": [
+    {
+      "name": "generateText call",
+      "description": "The `generateText` function from the `ai` package is called with `model`, `system`, `messages`, and `tools` parameters.",
+      "max_score": 25
+    },
+    {
+      "name": "maxSteps: 10",
+      "description": "`maxSteps` is passed as `10` to `generateText`, enabling up to 10 rounds of tool execution.",
+      "max_score": 25
+    },
+    {
+      "name": "[[IGNORE]] detection",
+      "description": "The result text is checked for the substring `[[IGNORE]]` and `null` is returned when it is present.",
+      "max_score": 25
+    },
+    {
+      "name": "Return text on success",
+      "description": "When `[[IGNORE]]` is absent, the function returns `result.text` (the generated string) directly.",
+      "max_score": 15
+    },
+    {
+      "name": "Async function",
+      "description": "The function is declared async and properly awaits the `generateText` call.",
+      "max_score": 10
+    }
+  ]
+}

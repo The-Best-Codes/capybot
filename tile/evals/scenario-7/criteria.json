@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the developer key validation correctly implements HMAC-SHA256 signature verification and expiry checking using the Base64URL-encoded payload+signature key format. This is the security foundation for capybot's privileged developer commands.",
+  "type": "weighted_checklist",
+  "capability_tested": "Developer Authentication with HMAC Keys",
+  "checklist": [
+    {
+      "name": "Key parsing",
+      "description": "The key is split on `.` into exactly two parts; the payload is Base64URL-decoded and JSON-parsed to extract the fields.",
+      "max_score": 15
+    },
+    {
+      "name": "HMAC-SHA256 recomputation",
+      "description": "The HMAC-SHA256 signature is recomputed over the raw payload string using `process.env.DEV_KEY_SECRET` as the secret key.",
+      "max_score": 30
+    },
+    {
+      "name": "Signature comparison",
+      "description": "The recomputed signature is Base64URL-encoded and compared to the provided signature; a mismatch causes the function to return `null`.",
+      "max_score": 25
+    },
+    {
+      "name": "Expiry check",
+      "description": "When `expiry` is a non-null ISO date string, the function checks if the current date is past it and returns `null` if expired. When `expiry` is `null`, no expiry check is performed.",
+      "max_score": 20
+    },
+    {
+      "name": "Return value",
+      "description": "Returns the decoded payload object on successful validation, or `null` on any failure (parse error, signature mismatch, expired).",
+      "max_score": 10
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the solution correctly implements an event handler module using the discraft pattern. Checks that the exported object has the required shape, that the event property references the correct Discord.js Events constant, and that the handler correctly accesses the guild's system channel to send a welcome message.",
+  "type": "weighted_checklist",
+  "capability_tested": "Event Handler Registration",
+  "checklist": [
+    {
+      "name": "Default export shape",
+      "description": "The module exports a default object containing both an `event` property and a `handler` async function, matching the discraft event module pattern.",
+      "max_score": 20
+    },
+    {
+      "name": "Correct event constant",
+      "description": "The `event` property is set to `Events.GuildMemberAdd` (or the equivalent string `'guildMemberAdd'`) from discord.js.",
+      "max_score": 25
+    },
+    {
+      "name": "Handler signature",
+      "description": "The `handler` is an async function accepting `(client, member)` where `client` is the Discord Client and `member` is a GuildMember.",
+      "max_score": 15
+    },
+    {
+      "name": "System channel access",
+      "description": "The handler accesses the guild's `systemChannel` property to determine where to send the welcome message.",
+      "max_score": 20
+    },
+    {
+      "name": "Conditional message send",
+      "description": "A welcome message containing the member's display name is sent to the system channel only when it exists; no action is taken when systemChannel is null.",
+      "max_score": 20
+    }
+  ]
+}

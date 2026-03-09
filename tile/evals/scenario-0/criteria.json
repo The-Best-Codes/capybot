@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the solution correctly implements a slash command using the discraft module pattern. Checks that the exported object has the correct shape, that the SlashCommandBuilder is configured with the right name, description, and options, and that the execute function replies with the expected greeting.",
+  "type": "weighted_checklist",
+  "capability_tested": "Slash Command Definition",
+  "checklist": [
+    {
+      "name": "Default export shape",
+      "description": "The module exports a default object containing both a `data` property and an `execute` async function, matching the discraft command module pattern.",
+      "max_score": 20
+    },
+    {
+      "name": "SlashCommandBuilder usage",
+      "description": "The `data` property is built using SlashCommandBuilder with `setName('greet')` and `setDescription(...)` called correctly.",
+      "max_score": 20
+    },
+    {
+      "name": "String option definition",
+      "description": "A string option named `'name'` with a non-empty description is added to the builder and marked as required via `setRequired(true)`.",
+      "max_score": 20
+    },
+    {
+      "name": "Execute function signature",
+      "description": "The `execute` function is async and receives a destructured `{ interaction }` parameter of type `ChatInputCommandInteraction`.",
+      "max_score": 15
+    },
+    {
+      "name": "Correct reply text",
+      "description": "The execute function retrieves the `name` option from the interaction and calls `interaction.reply()` with the exact string `\"Hello, {name}! Welcome to the server.\"`.",
+      "max_score": 25
+    }
+  ]
+}

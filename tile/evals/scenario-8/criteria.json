@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the tool call persistence module correctly saves and retrieves ToolCallRecord arrays from per-message JSON files, and implements the 30-day cleanup policy. This module supports the dev_toolcalls command which shows developers what tools the AI invoked for a given message.",
+  "type": "weighted_checklist",
+  "capability_tested": "Tool Call Persistence",
+  "checklist": [
+    {
+      "name": "saveToolCall creates/appends",
+      "description": "`saveToolCall` creates the file with a single-element array if it does not exist, or reads the existing array and appends the new record before writing back.",
+      "max_score": 30
+    },
+    {
+      "name": "File path convention",
+      "description": "Files are stored at `data/tool_calls/{messageId}.json` and the directory is created if it does not exist.",
+      "max_score": 15
+    },
+    {
+      "name": "getToolCalls behavior",
+      "description": "`getToolCalls` returns the parsed array from the file, or `[]` (empty array) when the file does not exist — without throwing an error.",
+      "max_score": 25
+    },
+    {
+      "name": "30-day cleanup",
+      "description": "`cleanup()` removes files whose records are older than 30 days by checking the `timestamp` field and comparing to the current date.",
+      "max_score": 20
+    },
+    {
+      "name": "Record schema",
+      "description": "Saved records preserve all fields from the ToolCallRecord interface: `toolName`, `input`, `output`/`error`, `step`, `timestamp`, and `executionTime`.",
+      "max_score": 10
+    }
+  ]
+}

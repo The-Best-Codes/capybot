@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the AnalyticsManager correctly implements the four tracking methods and persists data in the dual-path file structure (by-date and by-type). This is the observability backbone of capybot, recording command, event, message, and AI analytics.",
+  "type": "weighted_checklist",
+  "capability_tested": "Analytics Tracking",
+  "checklist": [
+    {
+      "name": "initialize() creates dirs",
+      "description": "`initialize()` is async and creates `data/analytics/by-date/` and `data/analytics/by-type/` directories (with recursive mkdir).",
+      "max_score": 15
+    },
+    {
+      "name": "trackCommand implementation",
+      "description": "`trackCommand` records an entry with `type: 'command'` and all provided fields (name, userId, guildId, channelId, success, executionTime, options).",
+      "max_score": 20
+    },
+    {
+      "name": "trackEvent and trackMessage",
+      "description": "`trackEvent` records `type: 'event'` with `eventName` and `metadata`; `trackMessage` records `type: 'message'` with all required fields.",
+      "max_score": 20
+    },
+    {
+      "name": "trackAI implementation",
+      "description": "`trackAI` records `type: 'ai'` with all AI fields including `promptTokens`, `completionTokens`, `toolCalls`, `generationTime`, `success`, and `reason`.",
+      "max_score": 20
+    },
+    {
+      "name": "Dual-path persistence",
+      "description": "Each tracked event is written/appended to both the daily date file (`by-date/YYYY-MM-DD.json`) and the type file (`by-type/{type}.json`).",
+      "max_score": 25
+    }
+  ]
+}

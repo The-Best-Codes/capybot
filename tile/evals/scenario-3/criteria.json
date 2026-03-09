@@ -1,0 +1,32 @@
+{
+  "context": "Evaluates whether the AI provider is correctly configured using @ai-sdk/openai-compatible with environment-variable-driven base URL, API key, and model names. Checks that two model exports exist and that defaults are applied when environment variables are absent.",
+  "type": "weighted_checklist",
+  "capability_tested": "AI Provider Configuration",
+  "checklist": [
+    {
+      "name": "createOpenAICompatible usage",
+      "description": "The `createOpenAICompatible` function from `@ai-sdk/openai-compatible` is called with `baseURL` and `apiKey` sourced from the correct environment variables.",
+      "max_score": 30
+    },
+    {
+      "name": "globalModel export",
+      "description": "A `globalModel` is exported, created by calling the provider with the model ID from `process.env.AI_GLOBAL_MODEL`.",
+      "max_score": 20
+    },
+    {
+      "name": "attachmentModel export",
+      "description": "An `attachmentModel` is exported, created by calling the provider with the model ID from `process.env.AI_ATTACHMENT_MODEL`.",
+      "max_score": 20
+    },
+    {
+      "name": "Default fallbacks",
+      "description": "Both model IDs fall back to a non-empty default string when the corresponding environment variable is not set.",
+      "max_score": 20
+    },
+    {
+      "name": "Module structure",
+      "description": "The provider is created once at module level (not inside a function) and models are exported as named exports.",
+      "max_score": 10
+    }
+  ]
+}
