@@ -123,6 +123,8 @@ export default {
 
       let { text } = result;
 
+      text = text.replace(/^<think>[\s\S]*?<\/think>\s*/, "");
+
       if (text.includes(IGNORE_PHRASE)) {
         logger.info(`AI Decided to ignore message: ${message.id}`);
 
