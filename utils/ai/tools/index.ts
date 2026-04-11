@@ -3,7 +3,6 @@ import { createAddReactionsTool } from "./addReactions";
 import { createGenerateImageTool } from "./generateImage";
 import { createGetAttachmentDescriptionTool } from "./getAttachmentDescription";
 import { createOracleTool } from "./oracle";
-import { createSendMessagesTool } from "./sendMessages";
 
 export function createTools(channel: TextBasedChannel, guild: Guild | null) {
   return {
@@ -11,7 +10,6 @@ export function createTools(channel: TextBasedChannel, guild: Guild | null) {
     getAttachmentDescription: createGetAttachmentDescriptionTool(),
     generateImage: createGenerateImageTool(),
     oracle: createOracleTool(channel, guild),
-    sendMessages: createSendMessagesTool(channel, guild),
   };
 }
 

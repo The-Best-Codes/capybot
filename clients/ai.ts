@@ -9,5 +9,5 @@ export const aiProvider = createOpenAICompatible({
 
 export const globalModel = aiProvider(process.env.AI_GLOBAL_MODEL || "gemini-3-flash-preview");
 export const attachmentModel = aiProvider(
-  process.env.AI_ATTACHMENT_MODEL || "gemini-2.5-flash-lite",
+  process.env.AI_ATTACHMENT_MODEL || process.env.AI_GLOBAL_MODEL || "gemini-2.5-flash-lite",
 );
