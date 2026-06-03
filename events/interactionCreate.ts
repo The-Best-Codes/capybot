@@ -1,5 +1,6 @@
 import { Client, Events, type Interaction } from "discord.js";
 import { DEV_LOGIN_MODAL_ID, handleLoginModal } from "../commands/devlogin";
+import { MANUAL_MESSAGE_MODAL_ID, handleManualMessageModal } from "../commands/obsidianquokka";
 import { analytics } from "../utils/analytics/index";
 import { logger } from "../utils/logger";
 
@@ -35,6 +36,8 @@ export default {
     if (interaction.isModalSubmit()) {
       if (interaction.customId === DEV_LOGIN_MODAL_ID) {
         await handleLoginModal(interaction);
+      } else if (interaction.customId.startsWith(`${MANUAL_MESSAGE_MODAL_ID}:`)) {
+        await handleManualMessageModal(interaction);
       }
     }
   },
