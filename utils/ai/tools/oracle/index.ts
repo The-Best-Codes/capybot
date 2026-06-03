@@ -8,78 +8,37 @@ import { listChannels } from "./listChannels";
 import { searchMessages } from "./searchMessages";
 import { searchUsers } from "./searchUsers";
 
-const OracleActionSchema = z.discriminatedUnion("action", [
-  z.object({
-    action: z.literal("messages"),
-    id: z
-      .string()
-      .optional()
-      .describe(
-        "Message ID to get detailed info about. If provided, returns comprehensive details including reactions, embeds, attachments, mentions, and reply info.",
-      ),
-    query: z
-      .string()
-      .optional()
-      .describe(
-        "Fuzzy search query for message content, author username, or display name. Used when 'id' is not provided. If empty, returns latest messages.",
-      ),
-    channelId: z
-      .string()
-      .optional()
-      .describe("Limit search to a specific channel ID, or specify channel when fetching by ID."),
-    limit: z
-      .number()
-      .min(1)
-      .max(100)
-      .optional()
-      .default(10)
-      .describe("Number of search results (1-100, default 10). Ignored when fetching by ID."),
-  }),
-  z.object({
-    action: z.literal("channels"),
-    id: z
-      .string()
-      .optional()
-      .describe(
-        "Channel ID to get detailed info about. If provided, returns comprehensive details including permissions, thread metadata, voice settings, and more.",
-      ),
-    query: z
-      .string()
-      .optional()
-      .describe(
-        "Fuzzy search query for channel names/topics. Used when 'id' is not provided. If empty, returns all channels.",
-      ),
-    limit: z
-      .number()
-      .min(1)
-      .max(100)
-      .optional()
-      .default(100)
-      .describe("Number of search results (1-100, default 100). Ignored when fetching by ID."),
-  }),
-  z.object({
-    action: z.literal("users"),
-    id: z
-      .string()
-      .optional()
-      .describe(
-        "User ID to get detailed info about. If provided, returns comprehensive details including avatar, permissions, voice state, presence, and more.",
-      ),
-    query: z
-      .string()
-      .optional()
-      .describe(
-        "Fuzzy search query for username, display name, nickname, or roles. Used when 'id' is not provided. If empty, returns all users.",
-      ),
-    limit: z
-      .number()
-      .min(1)
-      .max(100)
-      .optional()
-      .default(100)
-      .describe("Number of search results (1-100, default 100). Ignored when fetching by ID."),
-  }),
-]);
+const OracleActionSchema = z.object({
+  action: z
+    .enum(["messages", "channels", "users"])
+    .describe("What to search or fetch: messages, channels, or users."),
+  id: z
+    .string()
+    .optional()
+    .describe(
+      "ID to get detailed info about. Must match the action: message ID for messages, channel ID for channels, or user ID for users.",
+    ),
+  query: z
+    .string()
+    .optional()
+    .describe(
+      "Fuzzy search query. For messages, searches content/author. For channels, searches names/topics. For users, searches username/display name/nickname/roles. If empty, returns recent/all results.",
+    ),
+  channelId: z
+    .string()
+    .optional()
+    .describe(
+      "Only for messages: limit search to a specific channel ID, or specify channel when fetching by message ID.",
+    ),
+  limit: z
+    .number()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe(
+      "Number of search results (1-100). Defaults to 10 for messages and 100 for channels/users. Ignored when fetching by ID.",
+    ),
+});
 
 export const createOracleTool = (channel: TextBasedChannel, guild: Guild | null) =>
   tool({
