@@ -1,15 +1,25 @@
 import type { Guild, TextBasedChannel } from "discord.js";
 import { createAddReactionsTool } from "./addReactions";
 import { createGenerateImageTool } from "./generateImage";
+import { createGetServerChannelTool } from "./getServerChannel";
+import { createGetServerMessageTool } from "./getServerMessage";
+import { createGetServerUserTool } from "./getServerUser";
 import { createGetAttachmentDescriptionTool } from "./getAttachmentDescription";
-import { createOracleTool } from "./oracle";
+import { createSearchServerChannelsTool } from "./searchServerChannels";
+import { createSearchServerMessagesTool } from "./searchServerMessages";
+import { createSearchServerUsersTool } from "./searchServerUsers";
 
 export function createTools(channel: TextBasedChannel, guild: Guild | null) {
   return {
     addReactions: createAddReactionsTool(channel),
     getAttachmentDescription: createGetAttachmentDescriptionTool(),
     generateImage: createGenerateImageTool(),
-    oracle: createOracleTool(channel, guild),
+    getServerChannel: createGetServerChannelTool(guild),
+    searchServerChannels: createSearchServerChannelsTool(guild),
+    getServerMessage: createGetServerMessageTool(guild),
+    searchServerMessages: createSearchServerMessagesTool(guild),
+    getServerUser: createGetServerUserTool(guild),
+    searchServerUsers: createSearchServerUsersTool(guild),
   };
 }
 
