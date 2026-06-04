@@ -8,10 +8,12 @@ import { createGetAttachmentDescriptionTool } from "./getAttachmentDescription";
 import { createSearchServerChannelsTool } from "./searchServerChannels";
 import { createSearchServerMessagesTool } from "./searchServerMessages";
 import { createSearchServerUsersTool } from "./searchServerUsers";
+import { createBrowseWebTool } from "./browseWeb";
 
 export function createTools(channel: TextBasedChannel, guild: Guild | null) {
   return {
     addReactions: createAddReactionsTool(channel),
+    browseWeb: createBrowseWebTool(),
     getAttachmentDescription: createGetAttachmentDescriptionTool(),
     generateImage: createGenerateImageTool(),
     getServerChannel: createGetServerChannelTool(guild),
