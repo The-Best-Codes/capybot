@@ -9,6 +9,7 @@ import { createSearchServerChannelsTool } from "./searchServerChannels";
 import { createSearchServerMessagesTool } from "./searchServerMessages";
 import { createSearchServerUsersTool } from "./searchServerUsers";
 import { createBrowseWebTool } from "./browseWeb";
+import { createSearchWebTool } from "./searchWeb";
 
 export function createTools(channel: TextBasedChannel, guild: Guild | null) {
   return {
@@ -22,6 +23,7 @@ export function createTools(channel: TextBasedChannel, guild: Guild | null) {
     searchServerMessages: createSearchServerMessagesTool(guild),
     getServerUser: createGetServerUserTool(guild),
     searchServerUsers: createSearchServerUsersTool(guild),
+    searchWeb: createSearchWebTool(),
   };
 }
 
