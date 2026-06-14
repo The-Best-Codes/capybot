@@ -19,7 +19,7 @@ program
   .option("-e, --expires <days>", "Number of days until key expires")
   .option(
     "-p, --permissions <perms>",
-    "Comma-separated permissions (dm,dev_slash_commands,manual_message)",
+    "Comma-separated permissions (dm,dev_slash_commands,manual_message,summarize)",
   )
   .action(
     async (username: string | undefined, options: { expires?: string; permissions?: string }) => {
