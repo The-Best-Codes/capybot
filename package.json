@@ -16,11 +16,11 @@
     "lint:fix": "oxlint --fix ."
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.80",
-    "@ai-sdk/openai-compatible": "^2.0.48",
-    "@clack/prompts": "^1.5.1",
-    "@openrouter/ai-sdk-provider": "^2.9.0",
-    "ai": "^6.0.198",
+    "@ai-sdk/google": "^4.0.10",
+    "@ai-sdk/openai-compatible": "^3.0.6",
+    "@clack/prompts": "^1.7.0",
+    "@openrouter/ai-sdk-provider": "^3.0.0",
+    "ai": "^7.0.18",
     "cheerio": "^1.2.0",
     "commander": "^15.0.0",
     "consola": "^3.4.2",
@@ -33,8 +33,8 @@
   "devDependencies": {
     "@types/turndown": "^5.0.6",
     "discraft": "^1.7.11",
-    "oxfmt": "^0.54.0",
-    "oxlint": "^1.69.0",
-    "typescript": "^6.0.3"
+    "oxfmt": "^0.58.0",
+    "oxlint": "^1.73.0",
+    "typescript": "^7.0.2"
   }
 }
