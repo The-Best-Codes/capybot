@@ -17,10 +17,7 @@ program
   .description("Generate a new developer key")
   .argument("[username]", "Discord username (optional, will prompt if not provided)")
   .option("-e, --expires <days>", "Number of days until key expires")
-  .option(
-    "-p, --permissions <perms>",
-    "Comma-separated permissions (dm,dev_slash_commands,manual_message,summarize)",
-  )
+  .option("-p, --permissions <perms>", "Comma-separated permissions")
   .action(
     async (username: string | undefined, options: { expires?: string; permissions?: string }) => {
       if (!process.env.DEV_AUTH_SECRET) {

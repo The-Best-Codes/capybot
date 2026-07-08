@@ -67,7 +67,7 @@ function ensureRevokedKeysFile(): void {
   }
 }
 
-function loadSessions(): SessionStore {
+export function loadSessions(): SessionStore {
   ensureSessionsFile();
   try {
     return JSON.parse(readFileSync(SESSIONS_FILE, "utf-8"));

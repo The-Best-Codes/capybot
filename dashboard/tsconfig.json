@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    // Enable latest features
+    // Environment setup & latest features
     "lib": ["ESNext", "DOM"],
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "Preserve",
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
+    "types": ["bun", "react"],
 
     // Bundler mode
     "moduleResolution": "bundler",
@@ -18,11 +19,18 @@
     "strict": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+
+    "paths": {
+      "@/*": ["./src/*"]
+    },
 
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "exclude": ["dashboard"]
+
+  "exclude": ["dist", "node_modules"]
 }
