@@ -27,6 +27,27 @@ const queriesModule = import("../../utils/analytics/queries");
 const devAuthModule = import("../../utils/auth/devAuth");
 const permissionsModule = import("../../utils/auth/permissions");
 
+function parseDaysParam(url: URL): number | null {
+  const days = url.searchParams.get("days");
+  if (!days || days === "all") return null;
+  const n = parseInt(days, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+async function getStartDate(days: number | null): Promise<string> {
+  const { AnalyticsQueries } = await queriesModule;
+  if (days !== null) return AnalyticsQueries.getDaysAgo(days);
+
+  const { analytics } = await analyticsModule;
+  const stats = await analytics.getStats();
+  const dates = [stats.commands, stats.events, stats.messages, stats.ai]
+    .filter(Boolean)
+    .map((s) => s?.dateRange?.start)
+    .filter(Boolean) as string[];
+  if (dates.length === 0) return AnalyticsQueries.getDaysAgo(7);
+  return dates.sort()[0]!;
+}
+
 function generateSessionId(): string {
   return randomBytes(32).toString("hex");
 }
@@ -171,23 +192,13 @@ async function ensureAnalytics() {
   } catch {}
 }
 
-async function getEffectiveStartDate(fallback: string): Promise<string> {
-  const { analytics } = await analyticsModule;
-  const stats = await analytics.getStats();
-  const dates = [stats.commands, stats.events, stats.messages, stats.ai]
-    .filter(Boolean)
-    .map((s) => s?.dateRange?.start)
-    .filter(Boolean) as string[];
-  if (dates.length === 0) return fallback;
-  return dates.sort()[0]!;
-}
-
-async function handleStats(): Promise<Response> {
+async function handleStats(url: URL): Promise<Response> {
   const { analytics } = await analyticsModule;
   const { AnalyticsQueries } = await queriesModule;
   await ensureAnalytics();
   const today = AnalyticsQueries.getToday();
-  const start = await getEffectiveStartDate(AnalyticsQueries.getDaysAgo(7));
+  const days = parseDaysParam(url);
+  const start = await getStartDate(days);
 
   const [stats, cmdStats, msgStats, aiStats, eventStats, topUsers] = await Promise.all([
     analytics.getStats(),
@@ -201,66 +212,52 @@ async function handleStats(): Promise<Response> {
   return json({ stats, cmdStats, msgStats, aiStats, eventStats, topUsers });
 }
 
-async function handleCommands(): Promise<Response> {
+async function handleCommands(url: URL): Promise<Response> {
   const { AnalyticsQueries } = await queriesModule;
   await ensureAnalytics();
   const today = AnalyticsQueries.getToday();
-  const start = await getEffectiveStartDate(AnalyticsQueries.getDaysAgo(7));
+  const days = parseDaysParam(url);
+  const start = await getStartDate(days);
 
-  const [allStats, recentStats] = await Promise.all([
-    getAnalyticsOrNull(() => AnalyticsQueries.getCommandStats(start, today)),
-    getAnalyticsOrNull(() =>
-      AnalyticsQueries.getCommandStats(AnalyticsQueries.getDaysAgo(30), today),
-    ),
-  ]);
+  const stats = await getAnalyticsOrNull(() => AnalyticsQueries.getCommandStats(start, today));
 
-  return json({ stats: allStats, monthStats: recentStats });
+  return json({ stats });
 }
 
-async function handleMessages(): Promise<Response> {
+async function handleMessages(url: URL): Promise<Response> {
   const { AnalyticsQueries } = await queriesModule;
   await ensureAnalytics();
   const today = AnalyticsQueries.getToday();
-  const start = await getEffectiveStartDate(AnalyticsQueries.getDaysAgo(7));
+  const days = parseDaysParam(url);
+  const start = await getStartDate(days);
 
-  const [allStats, recentStats] = await Promise.all([
-    getAnalyticsOrNull(() => AnalyticsQueries.getMessageStats(start, today)),
-    getAnalyticsOrNull(() =>
-      AnalyticsQueries.getMessageStats(AnalyticsQueries.getDaysAgo(30), today),
-    ),
-  ]);
+  const stats = await getAnalyticsOrNull(() => AnalyticsQueries.getMessageStats(start, today));
 
-  return json({ stats: allStats, monthStats: recentStats });
+  return json({ stats });
 }
 
-async function handleAI(): Promise<Response> {
+async function handleAI(url: URL): Promise<Response> {
   const { AnalyticsQueries } = await queriesModule;
   await ensureAnalytics();
   const today = AnalyticsQueries.getToday();
-  const start = await getEffectiveStartDate(AnalyticsQueries.getDaysAgo(7));
+  const days = parseDaysParam(url);
+  const start = await getStartDate(days);
 
-  const [allStats, recentStats] = await Promise.all([
-    getAnalyticsOrNull(() => AnalyticsQueries.getAIStats(start, today)),
-    getAnalyticsOrNull(() => AnalyticsQueries.getAIStats(AnalyticsQueries.getDaysAgo(30), today)),
-  ]);
+  const stats = await getAnalyticsOrNull(() => AnalyticsQueries.getAIStats(start, today));
 
-  return json({ stats: allStats, monthStats: recentStats });
+  return json({ stats });
 }
 
-async function handleEvents(): Promise<Response> {
+async function handleEvents(url: URL): Promise<Response> {
   const { AnalyticsQueries } = await queriesModule;
   await ensureAnalytics();
   const today = AnalyticsQueries.getToday();
-  const start = await getEffectiveStartDate(AnalyticsQueries.getDaysAgo(7));
+  const days = parseDaysParam(url);
+  const start = await getStartDate(days);
 
-  const [allStats, recentStats] = await Promise.all([
-    getAnalyticsOrNull(() => AnalyticsQueries.getEventStats(start, today)),
-    getAnalyticsOrNull(() =>
-      AnalyticsQueries.getEventStats(AnalyticsQueries.getDaysAgo(30), today),
-    ),
-  ]);
+  const stats = await getAnalyticsOrNull(() => AnalyticsQueries.getEventStats(start, today));
 
-  return json({ stats: allStats, monthStats: recentStats });
+  return json({ stats });
 }
 
 async function handleDevSessions(): Promise<Response> {
@@ -300,11 +297,11 @@ const server = serve({
       return loginHtml || new Response("Not Found", { status: 404 });
     }
 
-    if (url.pathname === "/api/stats") return handleStats();
-    if (url.pathname === "/api/commands") return handleCommands();
-    if (url.pathname === "/api/messages") return handleMessages();
-    if (url.pathname === "/api/ai") return handleAI();
-    if (url.pathname === "/api/events") return handleEvents();
+    if (url.pathname === "/api/stats") return handleStats(url);
+    if (url.pathname === "/api/commands") return handleCommands(url);
+    if (url.pathname === "/api/messages") return handleMessages(url);
+    if (url.pathname === "/api/ai") return handleAI(url);
+    if (url.pathname === "/api/events") return handleEvents(url);
     if (url.pathname === "/api/dev-sessions") return handleDevSessions();
 
     const staticFile = await tryServeStatic(url);
