@@ -45,14 +45,24 @@ function json(data: unknown, status = 200) {
   });
 }
 
-function getSessionFromCookie(req: Request): DashSession | null {
+async function getSessionFromCookie(req: Request): Promise<DashSession | null> {
   const cookie = req.headers.get("cookie");
   if (!cookie) return null;
   const match = cookie.split(";").find((c) => c.trim().startsWith(`${SESSION_COOKIE}=`));
   if (!match) return null;
   const sid = match.split("=")[1]?.trim();
   if (!sid) return null;
-  return dashSessions.get(sid) || null;
+  const session = dashSessions.get(sid) || null;
+  if (!session) return null;
+
+  const { getKeyInfo } = await devAuthModule;
+  const info = getKeyInfo(session.key);
+  if (!info.valid) {
+    dashSessions.delete(sid);
+    return null;
+  }
+
+  return session;
 }
 
 function serveFile(filePath: string, mime: string): Response | null {
@@ -138,8 +148,8 @@ function handleLogout(req: Request): Response {
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
 }
 
-function handleCheck(req: Request): Response {
-  const session = getSessionFromCookie(req);
+async function handleCheck(req: Request): Promise<Response> {
+  const session = await getSessionFromCookie(req);
   if (!session) return json({ authenticated: false }, 401);
   return json({
     authenticated: true,
@@ -273,9 +283,9 @@ const server = serve({
 
     if (url.pathname === "/api/login" && method === "POST") return handleLogin(req);
     if (url.pathname === "/api/logout" && method === "POST") return handleLogout(req);
-    if (url.pathname === "/api/check" && method === "GET") return handleCheck(req);
+    if (url.pathname === "/api/check" && method === "GET") return await handleCheck(req);
 
-    const session = getSessionFromCookie(req);
+    const session = await getSessionFromCookie(req);
     if (!session) {
       if (url.pathname.startsWith("/api/")) return json({ error: "Unauthorized" }, 401);
       const staticFile = await tryServeStatic(url);
