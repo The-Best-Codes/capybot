@@ -10,7 +10,7 @@
     "start:dashboard": "cd dashboard && NODE_ENV=production bun src/index.ts",
     "start": "bun run start:bot & bun run start:dashboard",
     "dev:bot": "discraft dev",
-    "dev:dashboard": "cd dashboard && bun --hot src/index.ts",
+    "dev:dashboard": "cd dashboard && bun build.ts && bun --hot src/index.ts",
     "dev": "bun run dev:bot & bun run dev:dashboard",
     "build:bot": "discraft build",
     "build:dashboard": "cd dashboard && bun build.ts",

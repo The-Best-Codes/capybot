@@ -9,7 +9,8 @@ process.chdir(ROOT);
 config({ path: path.join(ROOT, ".env") });
 
 const isProd = process.env.NODE_ENV === "production";
-const WEB_ROOT = path.join(ROOT, "dashboard", isProd ? "dist" : "src");
+const distPath = path.join(ROOT, "dashboard", "dist");
+const WEB_ROOT = existsSync(distPath) ? distPath : path.join(ROOT, "dashboard", "src");
 
 const SESSION_COOKIE = "dash_session";
 
