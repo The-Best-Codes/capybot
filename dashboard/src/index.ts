@@ -107,8 +107,13 @@ async function handleLogin(req: Request): Promise<Response> {
   const { getKeyInfo } = await devAuthModule;
   const { hasPermission } = await permissionsModule;
 
-  const body = await req.json();
-  const key = body.key as string;
+  let body: { key: string };
+  try {
+    body = await req.json();
+  } catch {
+    return json({ error: "Invalid JSON body" }, 400);
+  }
+  const key = body.key;
   if (!key) return json({ error: "Key is required" }, 400);
 
   const info = getKeyInfo(key);
