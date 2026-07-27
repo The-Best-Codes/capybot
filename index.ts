@@ -8,6 +8,7 @@ import { registerCommands } from "./.discraft/commands/index";
 import { registerEvents } from "./.discraft/events/index";
 import client from "./clients/discord";
 import { analytics } from "./utils/analytics/index";
+import { engagementPromptService } from "./utils/engagementPrompts/service";
 import { logger } from "./utils/logger";
 
 const CAPYBARA_EMOJI_NAME = "capybara";
@@ -68,6 +69,7 @@ registerEvents(client)
       try {
         await registerCommands(client);
         await checkCapybaraEmojiSetup();
+        await engagementPromptService.initialize(client);
       } catch (err) {
         logger.error("Error registering commands.");
         logger.verbose(err);
