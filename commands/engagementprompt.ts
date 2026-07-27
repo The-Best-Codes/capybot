@@ -14,6 +14,7 @@ import {
   engagementPromptConfig,
   type EngagementPromptConfig,
 } from "../utils/engagementPrompts/config";
+import { engagementPromptService } from "../utils/engagementPrompts/service";
 
 export const ENGAGEMENT_PROMPT_MODAL_ID = "engagement_prompt_setup";
 const INTERVAL_INPUT_ID = "engagement_prompt_interval_hours";
@@ -120,6 +121,32 @@ async function disablePrompt(interaction: ChatInputCommandInteraction): Promise<
   });
 }
 
+async function triggerPrompt(interaction: ChatInputCommandInteraction): Promise<void> {
+  const existing = await engagementPromptConfig.get(interaction.guildId!);
+
+  if (!existing || !existing.enabled) {
+    await interaction.reply({
+      content: "Enable engagement prompts first before triggering a test post.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+  const result = await engagementPromptService.triggerNow(interaction.client, interaction.guildId!);
+
+  if (!result.ok) {
+    await interaction.editReply(result.error);
+    return;
+  }
+
+  const updated = await engagementPromptConfig.get(interaction.guildId!);
+  await interaction.editReply(
+    `Triggered a test engagement prompt in <#${existing.channelId}>. Next post: ${formatTimestamp(updated?.nextRunAt ?? null)}`,
+  );
+}
+
 export async function handleEngagementPromptModal(
   interaction: ModalSubmitInteraction,
 ): Promise<void> {
@@ -193,6 +220,7 @@ export default {
         .setRequired(false)
         .addChoices(
           { name: "Enable", value: "enable" },
+          { name: "Trigger Now", value: "trigger" },
           { name: "Status", value: "status" },
           { name: "Disable", value: "disable" },
         ),
@@ -233,6 +261,11 @@ export default {
 
     if (action === "disable") {
       await disablePrompt(interaction);
+      return;
+    }
+
+    if (action === "trigger") {
+      await triggerPrompt(interaction);
       return;
     }
 

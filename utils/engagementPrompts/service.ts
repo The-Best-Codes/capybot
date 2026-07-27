@@ -94,6 +94,31 @@ class EngagementPromptService {
     await Promise.allSettled(dueConfigs.map((config) => this.runPrompt(client, config)));
   }
 
+  async triggerNow(
+    client: Client,
+    guildId: string,
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
+    const config = await engagementPromptConfig.get(guildId);
+
+    if (!config || !config.enabled) {
+      return { ok: false, error: "Engagement prompts are not enabled for this server." };
+    }
+
+    if (this.runningGuilds.has(guildId)) {
+      return { ok: false, error: "A prompt is already being generated for this server." };
+    }
+
+    try {
+      await this.runPrompt(client, config);
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
   private async runPrompt(client: Client, config: EngagementPromptConfig): Promise<void> {
     if (this.runningGuilds.has(config.guildId)) {
       return;
@@ -146,6 +171,7 @@ class EngagementPromptService {
         updatedAt: Date.now(),
         updatedBy: "system",
       });
+      throw error;
     } finally {
       this.runningGuilds.delete(config.guildId);
     }
