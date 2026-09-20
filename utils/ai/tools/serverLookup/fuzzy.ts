@@ -1,4 +1,4 @@
-import fuzzysort from "fuzzysort";
+import fuzzysort, { type Key } from "fuzzysort";
 
 export interface FuzzySearchOptions<T> {
   items: T[];
@@ -25,15 +25,15 @@ export function fuzzySearch<T>({
     }));
   }
 
-  const results = fuzzysort.go(query, items as readonly object[], {
-    keys: keys as string[],
+  const results = fuzzysort.go<T>(query, items, {
+    keys: keys as Key<T>[],
     limit,
-    all: false,
+    threshold: 0,
   });
 
   return results.map((r) => ({
-    item: r.obj as T,
-    score: Math.max(0, (r.score + 10000) / 10000),
+    item: r.obj,
+    score: r.score,
   }));
 }
 
