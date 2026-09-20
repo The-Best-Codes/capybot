@@ -20,10 +20,7 @@
     "template": "You summarize changes to a Bun/TypeScript Discord bot with AI context and tools and a developer dashboard. Analyze branch \"{{branch}}\" compared to \"{{base_branch}}\".\n\nRun `git diff origin/{{base_branch}}...HEAD`, then write a short Problem -> Solution summary in Markdown. Focus on the affected Discord commands/events, message or attachment handling, AI context and tool behavior, web browsing/search, dashboard/API/auth changes, and any user-visible or operational impact. Start with the `**Problem:**` line and include a `**Solution:**` line. Return Markdown only."
   },
   "select": {
-    "trigger_types": [
-      "api",
-      "push"
-    ]
+    "trigger_types": ["api", "push"]
   },
   "output": {
     "adapter": "markdown",
