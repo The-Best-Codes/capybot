@@ -1,0 +1,37 @@
+{
+  "id": "trail-confidence",
+  "display_name": "Confidence Eval",
+  "enabled": true,
+  "scope": "trail",
+  "runtime": {
+    "kind": "prompt_runner",
+    "agent": "claude",
+    "timeout_ms": 300000,
+    "sandbox": {
+      "base_template": "claude",
+      "repo_token": "read"
+    }
+  },
+  "automation": {
+    "kind": "trail_prompt"
+  },
+  "prompt": {
+    "template": "You are a confidence evaluator for a Bun/TypeScript Discord bot with an AI context/tooling layer and a developer dashboard. Analyze the changes on branch \"{{branch}}\" compared to \"{{base_branch}}\".\n\nRun `git diff origin/{{base_branch}}...HEAD` and inspect the affected code, types, and tests or validation. Score **confidence** from 0 to 100 using these dimensions: correctness of Discord event/command behavior and no-text or attachment handling; safe AI context construction and tool-call contracts; dashboard/API/auth integration; type safety and compatibility with existing Bun scripts; and evidence of validation.\n\nScore bands: 0-20 for broken or unvalidated changes with likely runtime failures; 21-40 for substantial gaps in event, context, tool, dashboard, or auth behavior; 41-60 for plausible implementation with limited validation or edge-case coverage; 61-80 for well-integrated, type-safe changes with reasonable validation; 81-100 for narrowly scoped changes that preserve existing behavior, handle relevant Discord/AI/tool edge cases, and have strong validation evidence.\n\nOutput ONLY this JSON object as the very last line of your response:\n\n{\"value\": <number 0-100>, \"rationale\": \"<1-2 sentence explanation>\"}"
+  },
+  "select": {
+    "trigger_types": [
+      "api",
+      "push"
+    ]
+  },
+  "output": {
+    "adapter": "last_json_line",
+    "result_type": "trail_monitor",
+    "trail_monitor": {
+      "key": "confidence",
+      "label": "Confidence",
+      "value_type": "percent",
+      "polarity": "higher_is_better"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "trail-risk",
+  "display_name": "Risk Eval",
+  "enabled": true,
+  "scope": "trail",
+  "runtime": {
+    "kind": "prompt_runner",
+    "agent": "claude",
+    "timeout_ms": 300000,
+    "sandbox": {
+      "base_template": "claude",
+      "repo_token": "read"
+    }
+  },
+  "automation": {
+    "kind": "trail_prompt"
+  },
+  "prompt": {
+    "template": "You are a risk evaluator for a Bun/TypeScript Discord bot with AI context construction, tool calls, web browsing/search, and a developer dashboard. Analyze the changes on branch \"{{branch}}\" compared to \"{{base_branch}}\".\n\nRun `git diff origin/{{base_branch}}...HEAD` and assess potential damage if the change is wrong. Score **risk** from 0 to 100 using: impact on Discord message/event and command processing; changes to conversation history, context size, attachments, or persistence; AI prompt/tool behavior and external web requests; dashboard/API and developer-auth boundaries; and blast radius, reversibility, and validation.\n\nScore bands: 0-20 for isolated presentation, wording, or low-impact internal changes; 21-40 for localized command, dashboard, or prompt changes with limited failure scope; 41-60 for changes affecting shared context, tool contracts, event routing, or multiple dashboard paths; 61-80 for changes that can broadly drop or misroute Discord data, alter AI behavior across users, expose endpoints, or break authentication; 81-100 for irreversible data loss, credential exposure, privilege bypass, uncontrolled external actions, or failures spanning core bot and dashboard operation.\n\nOutput ONLY this JSON object as the very last line of your response:\n\n{\"value\": <number 0-100>, \"rationale\": \"<1-2 sentence explanation>\"}"
+  },
+  "select": {
+    "trigger_types": [
+      "api",
+      "push"
+    ]
+  },
+  "output": {
+    "adapter": "last_json_line",
+    "result_type": "trail_monitor",
+    "trail_monitor": {
+      "key": "risk",
+      "label": "Risk",
+      "value_type": "percent",
+      "polarity": "lower_is_better"
+    }
+  }
+}
